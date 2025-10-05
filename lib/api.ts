@@ -1,4 +1,3 @@
-
 const API_URL = "http://localhost:6969";
 
 export const fetcher = async <T>(endpoint: string): Promise<T> => {

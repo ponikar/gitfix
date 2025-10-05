@@ -86,13 +86,13 @@ app.get("/api/repos/:owner/:repo/tree/:branch", async (c) => {
 
     const octokit = await octokitApp.getInstallationOctokit(installationId);
 
-    const { data: branchData } = await octokit.repos.getBranch({
+    const { data: branchData } = await octokit.request("GET /repos/{owner}/{repo}/branches/{branch}", {
       owner,
       repo,
       branch,
     });
 
-    const { data } = await octokit.git.getTree({
+    const { data } = await octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}", {
       owner,
       repo,
       tree_sha: branchData.commit.sha,

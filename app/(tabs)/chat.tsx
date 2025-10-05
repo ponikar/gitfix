@@ -1,23 +1,15 @@
-import { Text, View } from "@/components/Themed";
 import { useBranches } from "@/lib/useBranches";
 import { useTree } from "@/lib/useTree";
 import { useInstallationState } from "@/store/installation";
 import { useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
 import { ActivityIndicator, FlatList } from "react-native";
+import { VStack, Text } from "@expo/ui/swift-ui";
 
 export default function ChatScreen() {
-  const { owner, repo } = useLocalSearchParams<{
-    owner: string;
-    repo: string;
-  }>();
+  const { owner, repo } = useLocalSearchParams<{ owner: string; repo: string }>();
   const { installationId } = useInstallationState();
-  const {
-    data: branches,
-    isLoading,
-    isError,
-    error,
-  } = useBranches({
+  const { data: branches, isLoading, isError, error } = useBranches({
     owner: owner!,
     repo: repo!,
     installationId,
@@ -41,40 +33,36 @@ export default function ChatScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-black">
+      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" />
-        <Text className="text-black dark:text-white">Loading branches...</Text>
-      </View>
+        <Text>Loading branches...</Text>
+      </VStack>
     );
   }
 
   if (isError) {
     return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-black">
-        <Text className="text-2xl font-bold mb-5 text-black dark:text-white">
-          Error
-        </Text>
-        <Text className="text-black dark:text-white">{error?.message}</Text>
-      </View>
+      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>Error</Text>
+        <Text>{error?.message}</Text>
+      </VStack>
     );
   }
 
   return (
-    <View className="flex-1 items-center justify-center pt-5 bg-white dark:bg-black">
-      <Text className="text-2xl font-bold mb-5 text-black dark:text-white">
+    <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 5 }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>
         Branches for {owner}/{repo}
       </Text>
       <FlatList
         data={branches}
         keyExtractor={(item) => item.commit.sha}
         renderItem={({ item }) => (
-          <View className="p-2 border-b border-gray-300">
-            <Text className="text-base text-black dark:text-white">
-              {item.name}
-            </Text>
-          </View>
+          <VStack style={{ padding: 2, borderBottomWidth: 1, borderBottomColor: "gray" }}>
+            <Text style={{ fontSize: 16 }}>{item.name}</Text>
+          </VStack>
         )}
       />
-    </View>
+    </VStack>
   );
 }

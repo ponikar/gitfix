@@ -32,3 +32,7 @@ type State = {
 - use `react-native-mmkv` as default storage to store all the state (required), each state is represent with key.
 - Always create a key inside const `Storage` object in caps `STATE_NAME` correspond to that value.
 - helper type safe functions to easily save and get the key.
+
+### UI library
+
+- refer expo-ui.html as a documentation to understand how to use apis.

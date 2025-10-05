@@ -1,14 +1,11 @@
-import { Text, View } from "@/components/Themed";
 import { useRepos } from "@/lib/useRepos";
-import { useAuthActions, useAuthState } from "@/store/auth";
-import {
-  useInstallationActions,
-  useInstallationState,
-} from "@/store/installation";
+import { useAuthState } from "@/store/auth";
+import { useInstallationActions, useInstallationState } from "@/store/installation";
 import * as WebBrowser from "expo-web-browser";
 import { Link } from "expo-router";
 import React, { useEffect } from "react";
-import { ActivityIndicator, Button, FlatList } from "react-native";
+import { ActivityIndicator, FlatList } from "react-native";
+import { VStack, Text, Button } from "@expo/ui/swift-ui";
 
 export default function ReposScreen() {
   const { githubState, accessToken } = useAuthState();
@@ -57,26 +54,26 @@ export default function ReposScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-black">
+      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" />
-        <Text className="text-black dark:text-white">Loading repositories...</Text>
-      </View>
+        <Text>Loading repositories...</Text>
+      </VStack>
     );
   }
 
   if (isError) {
     return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-black">
-        <Text className="text-2xl font-bold mb-5 text-black dark:text-white">Error</Text>
-        <Text className="text-black dark:text-white">{error?.message}</Text>
-      </View>
+      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>Error</Text>
+        <Text>{error?.message}</Text>
+      </VStack>
     );
   }
 
   return (
-    <View className="flex-1 items-center justify-center pt-5 bg-white dark:bg-black">
-      <Text className="text-2xl font-bold mb-5 text-black dark:text-white">Your Repositories</Text>
-      <Button title="Configure Github Repo" onPress={handleConfigureRepo} />
+    <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 5 }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>Your Repositories</Text>
+      <Button onPress={handleConfigureRepo}>Configure Github Repo</Button>
       <FlatList
         data={repos}
         keyExtractor={(item) => item.id.toString()}
@@ -88,12 +85,12 @@ export default function ReposScreen() {
             }}
             asChild
           >
-            <View className="p-2 border-b border-gray-300">
-              <Text className="text-base text-blue-500">{item.full_name}</Text>
-            </View>
+            <VStack style={{ padding: 2, borderBottomWidth: 1, borderBottomColor: "gray" }}>
+              <Text style={{ fontSize: 16, color: "blue" }}>{item.full_name}</Text>
+            </VStack>
           </Link>
         )}
       />
-    </View>
+    </VStack>
   );
 }

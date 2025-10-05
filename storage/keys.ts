@@ -2,4 +2,5 @@ export const Storage = {
   ACCESS_TOKEN: "ACCESS_TOKEN",
   GITHUB_STATE: "GITHUB_STATE",
   CODE: "CODE",
+  INSTALLATION_ID: "INSTALLATION_ID",
 } as const;

@@ -3,7 +3,7 @@ import { Storage } from "./keys";
 
 export const storage = new MMKV({
   id: "gitfix-storage",
-  encryptionKey: process.env.EXPO_PUBLIC_STORAGE_ENCRYPTION_KEY || "storage_enc_key",
+  encryptionKey: process.env.EXPO_PUBLIC_STORAGE_ENCRYPTION_KEY,
 });
 
 export function getItem(key: keyof typeof Storage): string | null {

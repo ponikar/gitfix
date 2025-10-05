@@ -1,8 +1,8 @@
 import { Text, View } from "@/components/Themed";
 import { useAuthState } from "@/store/auth";
+import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
 import { Button, FlatList, Linking, StyleSheet } from "react-native";
-import * as WebBrowser from "expo-web-browser";
 
 interface Repo {
   id: number;
@@ -15,30 +15,42 @@ export default function ReposScreen() {
   const [repos, setRepos] = useState<Repo[]>([]);
   const { accessToken: token, githubState } = useAuthState();
 
-  const fetchRepos = useCallback(async () => {
-    if (token) {
-      try {
-        const response = await fetch("https://api.github.com/user/repos", {
-          headers: {
-            Authorization: `token ${token}`,
-          },
-        });
-        const data = await response.json();
-        setRepos(data);
-      } catch (error) {
-        console.error("Error fetching repos:", error);
-      }
+  const fetchInstallations = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      // 1️⃣ Fetch user installations
+      const instRes = await fetch("https://api.github.com/user/installations", {
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: "application/vnd.github+json",
+        },
+      });
+      const instData = await instRes.json();
+
+      console.log("instData", instData);
+      const installationId = instData.installations?.[0]?.id;
+      if (!installationId) return;
+
+      // // 2️⃣ Fetch repos from your backend using installationId
+      // const reposRes = await fetch(
+      //   `https://your-backend.com/repos/${installationId}`
+      // );
+      // const reposData = await reposRes.json();
+      // setRepos(reposData);
+    } catch (err) {
+      console.error("Error fetching installations or repos:", err);
     }
   }, [token]);
 
   useEffect(() => {
-    fetchRepos();
-  }, [fetchRepos]);
+    fetchInstallations();
+  }, [fetchInstallations]);
 
   const handleConfigureRepo = async () => {
     const url = `https://github.com/apps/gitfix-ai/installations/select_target?state=${githubState}`;
     await WebBrowser.openBrowserAsync(url);
-    fetchRepos();
+    fetchInstallations(); // refresh after user installs
   };
 
   return (
@@ -79,18 +91,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingTop: 20,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  title: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
   repoContainer: {
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
   },
-  repoName: {
-    fontSize: 16,
-    color: "blue",
-  },
+  repoName: { fontSize: 16, color: "blue" },
 });

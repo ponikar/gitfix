@@ -1,5 +1,6 @@
 import { useAuthActions } from "@/store/auth";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
+import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -18,13 +19,16 @@ export function useGitHubAuth() {
     logout: clearAuth,
   } = useAuthActions();
 
-  const [_r, _, promptAsync] = useAuthRequest(
+  const router = useRouter();
+
+  const [request, _, promptAsync] = useAuthRequest(
     {
       clientId: process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID as string,
-      scopes: ["identity", "repo"],
+      scopes: ["identity"],
       redirectUri: makeRedirectUri({
         native: "gitfix://callback",
       }),
+      usePKCE: true,
     },
     discovery
   );
@@ -34,6 +38,8 @@ export function useGitHubAuth() {
       const authResponse = await promptAsync();
       if (authResponse?.type === "success") {
         const { code, state } = authResponse.params;
+
+        console.log("authResponse", authResponse);
 
         setCode(code);
         if (state) {
@@ -50,16 +56,27 @@ export function useGitHubAuth() {
             client_id: process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID,
             client_secret: process.env.EXPO_PUBLIC_GITHUB_SECRET_ID,
             code,
+            code_verifier: request?.codeVerifier,
           }),
         });
 
-        const { access_token } = await tokenResponse.json();
+        if (!tokenResponse.ok) {
+          console.log("not ok", tokenResponse.toString());
+        }
+
+        const { access_token, ...rest } = await tokenResponse.json();
+
+        console.log("access_token", access_token, rest);
 
         if (access_token) {
           setAccessToken(access_token);
+          router.replace("/repos");
           return { access_token, state };
+        } else {
+          throw new Error("No access token");
         }
       }
+
       return null;
     } catch (error) {
       console.error("Error logging in:", error);

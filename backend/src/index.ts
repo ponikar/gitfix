@@ -33,9 +33,10 @@ app.get("/api/repos/:installationId", async (c) => {
 
     const octokit = await octokitApp.getInstallationOctokit(installationId);
 
-    const { data } = await octokit.request<InstallationReposResponse>(
-      "GET /installation/repositories"
-    );
+    const { data } = await octokit.request<InstallationReposResponse>({
+      url: "/installation/repositories",
+      method: "GET",
+    });
 
     return c.json(data.repositories);
   } catch (err: any) {

@@ -47,5 +47,66 @@ app.get("/api/repos/:installationId", async (c) => {
     );
   }
 });
+app.get("/api/repos/:owner/:repo/branches", async (c) => {
+  try {
+    const { owner, repo } = c.req.param();
+    const installationId = Number(c.req.query("installationId"));
+    const octokitApp = createOctokitApp(c.env);
+
+    if (!installationId) {
+      return c.json({ error: "Invalid installationId" }, 400);
+    }
+
+    const octokit = await octokitApp.getInstallationOctokit(installationId);
+
+    const { data } = await octokit.repos.listBranches({
+      owner,
+      repo,
+    });
+
+    return c.json(data);
+  } catch (err: any) {
+    console.error(err);
+    return c.json(
+      { error: "Failed to fetch branches", message: err.message },
+      500
+    );
+  }
+});
+
+app.get("/api/repos/:owner/:repo/tree/:branch", async (c) => {
+  try {
+    const { owner, repo, branch } = c.req.param();
+    const installationId = Number(c.req.query("installationId"));
+    const octokitApp = createOctokitApp(c.env);
+
+    if (!installationId) {
+      return c.json({ error: "Invalid installationId" }, 400);
+    }
+
+    const octokit = await octokitApp.getInstallationOctokit(installationId);
+
+    const { data: branchData } = await octokit.repos.getBranch({
+      owner,
+      repo,
+      branch,
+    });
+
+    const { data } = await octokit.git.getTree({
+      owner,
+      repo,
+      tree_sha: branchData.commit.sha,
+      recursive: "true",
+    });
+
+    return c.json(data);
+  } catch (err: any) {
+    console.error(err);
+    return c.json(
+      { error: "Failed to fetch tree", message: err.message },
+      500
+    );
+  }
+});
 
 export default app;

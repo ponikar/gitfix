@@ -1,13 +1,54 @@
 import { Text, View } from "@/components/Themed";
 import { useRepos } from "@/lib/useRepos";
-import { useAuthState } from "@/store/auth";
+import { useAuthActions, useAuthState } from "@/store/auth";
+import {
+  useInstallationActions,
+  useInstallationState,
+} from "@/store/installation";
 import * as WebBrowser from "expo-web-browser";
-import React from "react";
-import { ActivityIndicator, Button, FlatList, Linking } from "react-native";
+import { Link } from "expo-router";
+import React, { useEffect } from "react";
+import { ActivityIndicator, Button, FlatList } from "react-native";
 
 export default function ReposScreen() {
-  const { githubState } = useAuthState();
-  const { data: repos, isLoading, isError, error } = useRepos();
+  const { githubState, accessToken } = useAuthState();
+  const { installationId } = useInstallationState();
+  const { setInstallationId } = useInstallationActions();
+  const { data: repos, isLoading, isError, error } = useRepos(installationId);
+
+  useEffect(() => {
+    const fetchInstallationId = async () => {
+      if (!accessToken) return;
+      try {
+        const instRes = await fetch(
+          "https://api.github.com/user/installations",
+          {
+            headers: {
+              Authorization: `token ${accessToken}`,
+              Accept: "application/vnd.github+json",
+            },
+          }
+        );
+        if (!instRes.ok) {
+          throw new Error("Failed to fetch installations");
+        }
+        const instData = await instRes.json();
+        const installation = instData.installations.find(
+          (inst: any) =>
+            inst.app_id.toString() === process.env.EXPO_PUBLIC_APP_ID
+        );
+        if (installation) {
+          setInstallationId(installation.id);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (!installationId) {
+      fetchInstallationId();
+    }
+  }, [accessToken, installationId, setInstallationId]);
 
   const handleConfigureRepo = async () => {
     const url = `https://github.com/apps/gitfix-ai/installations/select_target?state=${githubState}`;
@@ -40,14 +81,17 @@ export default function ReposScreen() {
         data={repos}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View className="p-2 border-b border-gray-300">
-            <Text
-              className="text-base text-blue-500"
-              onPress={() => Linking.openURL(item.html_url)}
-            >
-              {item.full_name}
-            </Text>
-          </View>
+          <Link
+            href={{
+              pathname: "/(tabs)/chat",
+              params: { owner: item.full_name.split("/")[0], repo: item.full_name.split("/")[1] },
+            }}
+            asChild
+          >
+            <View className="p-2 border-b border-gray-300">
+              <Text className="text-base text-blue-500">{item.full_name}</Text>
+            </View>
+          </Link>
         )}
       />
     </View>

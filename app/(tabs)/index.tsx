@@ -1,7 +1,6 @@
-
-import { StyleSheet, Button } from 'react-native';
-import { Text, View } from '@/components/Themed';
-import { useGitHubAuth } from '@/components/useGitHubAuth';
+import { Text, View } from "@/components/Themed";
+import { useGitHubAuth } from "@/components/useGitHubAuth";
+import { Button, StyleSheet } from "react-native";
 
 export default function TabOneScreen() {
   const { token, login, logout } = useGitHubAuth();
@@ -23,7 +22,7 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

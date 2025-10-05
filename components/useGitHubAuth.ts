@@ -1,8 +1,6 @@
+import { useAuthActions } from "@/store/auth";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
-import * as React from "react";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -13,11 +11,14 @@ const discovery = {
 };
 
 export function useGitHubAuth() {
-  const [token, setToken] = React.useState<string | null>(null);
-  const [hasRepoScope, setHasRepoScope] = React.useState(false);
-  const router = useRouter();
+  const {
+    setAccessToken,
+    setCode,
+    setGithubState,
+    logout: clearAuth,
+  } = useAuthActions();
 
-  const [request, response, promptAsync] = useAuthRequest(
+  const [_r, _, promptAsync] = useAuthRequest(
     {
       clientId: process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID as string,
       scopes: ["identity", "repo"],
@@ -28,46 +29,48 @@ export function useGitHubAuth() {
     discovery
   );
 
-  const checkRepoScope = async (accessToken: string) => {
+  const login = async () => {
     try {
-      const response = await fetch("https://api.github.com/user", {
-        headers: {
-          Authorization: `token ${accessToken}`,
-        },
-      });
-      const scopes = response.headers.get("x-oauth-scopes");
-      if (scopes && scopes.includes("repo")) {
-        setHasRepoScope(true);
+      const authResponse = await promptAsync();
+      if (authResponse?.type === "success") {
+        const { code, state } = authResponse.params;
+
+        setCode(code);
+        if (state) {
+          setGithubState(state);
+        }
+
+        const tokenResponse = await fetch(discovery.tokenEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            client_id: process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID,
+            client_secret: process.env.EXPO_PUBLIC_GITHUB_SECRET_ID,
+            code,
+          }),
+        });
+
+        const { access_token } = await tokenResponse.json();
+
+        if (access_token) {
+          setAccessToken(access_token);
+          return { access_token, state };
+        }
       }
+      return null;
     } catch (error) {
-      console.error("Error checking repo scope:", error);
+      console.error("Error logging in:", error);
+      return null;
     }
   };
 
-  const login = async () => {
-    await promptAsync();
-  };
-
   const logout = async () => {
-    await SecureStore.deleteItemAsync("github_access_token");
-    setToken(null);
-    setHasRepoScope(false);
-    router.replace("/");
-    console.log("Logged out");
+    clearAuth();
+    return true;
   };
 
-  React.useEffect(() => {
-    const getToken = async () => {
-      const storedToken = await SecureStore.getItemAsync("github_access_token");
-      console.log("Stored token on mount:", storedToken);
-      if (storedToken) {
-        setToken(storedToken);
-        checkRepoScope(storedToken);
-        router.replace("/repos");
-      }
-    };
-    getToken();
-  }, []);
-
-  return { token, hasRepoScope, login, logout };
+  return { login, logout };
 }

@@ -2,11 +2,13 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createOctokitApp } from "./octokit";
 
-type Bindings = {
+export type Bindings = {
   GITHUB_CLIENT_ID: string;
   GITHUB_SECRET_ID: string;
   APP_ID: string;
   PRIVATE_KEY: string;
+  GOOGLE_API_KEY: string;
+  OPENAI_API_KEY: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -86,26 +88,29 @@ app.get("/api/repos/:owner/:repo/tree/:branch", async (c) => {
 
     const octokit = await octokitApp.getInstallationOctokit(installationId);
 
-    const { data: branchData } = await octokit.request("GET /repos/{owner}/{repo}/branches/{branch}", {
-      owner,
-      repo,
-      branch,
-    });
+    const { data: branchData } = await octokit.request(
+      "GET /repos/{owner}/{repo}/branches/{branch}",
+      {
+        owner,
+        repo,
+        branch,
+      }
+    );
 
-    const { data } = await octokit.request("GET /repos/{owner}/{repo}/git/trees/{tree_sha}", {
-      owner,
-      repo,
-      tree_sha: branchData.commit.sha,
-      recursive: "true",
-    });
+    const { data } = await octokit.request(
+      "GET /repos/{owner}/{repo}/git/trees/{tree_sha}",
+      {
+        owner,
+        repo,
+        tree_sha: branchData.commit.sha,
+        recursive: "true",
+      }
+    );
 
     return c.json(data);
   } catch (err: any) {
     console.error(err);
-    return c.json(
-      { error: "Failed to fetch tree", message: err.message },
-      500
-    );
+    return c.json({ error: "Failed to fetch tree", message: err.message }, 500);
   }
 });
 

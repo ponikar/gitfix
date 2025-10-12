@@ -24,7 +24,7 @@ export function useGitHubAuth() {
   const [request, _, promptAsync] = useAuthRequest(
     {
       clientId: process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID as string,
-      scopes: ["identity"],
+      scopes: ["repo"],
       redirectUri: makeRedirectUri({
         native: "gitfix://callback",
       }),

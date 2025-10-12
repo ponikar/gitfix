@@ -13,6 +13,7 @@
   "dependencies": {
     "@ai-sdk/google": "^2.0.17",
     "@ai-sdk/openai": "^0.0.37",
+    "@hono/zod-validator": "^0.7.3",
     "ai": "^5.0.60",
     "hono": "^4.9.9",
     "octokit": "^5.0.3",

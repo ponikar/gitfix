@@ -1,11 +1,21 @@
 import { useRepos } from "@/lib/useRepos";
 import { useAuthState } from "@/store/auth";
-import { useInstallationActions, useInstallationState } from "@/store/installation";
-import * as WebBrowser from "expo-web-browser";
+import {
+  useInstallationActions,
+  useInstallationState,
+} from "@/store/installation";
 import { Link } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
-import { ActivityIndicator, FlatList } from "react-native";
-import { VStack, Text, Button } from "@expo/ui/swift-ui";
+import {
+  ActivityIndicator,
+  Button,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function ReposScreen() {
   const { githubState, accessToken } = useAuthState();
@@ -52,28 +62,30 @@ export default function ReposScreen() {
     await WebBrowser.openBrowserAsync(url);
   };
 
+  console.log("repos", repos?.length);
+
   if (isLoading) {
     return (
-      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+      <View style={styles.center}>
         <ActivityIndicator size="large" />
         <Text>Loading repositories...</Text>
-      </VStack>
+      </View>
     );
   }
 
   if (isError) {
     return (
-      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>Error</Text>
+      <View style={styles.center}>
+        <Text>Error</Text>
         <Text>{error?.message}</Text>
-      </VStack>
+      </View>
     );
   }
 
   return (
-    <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 5 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>Your Repositories</Text>
-      <Button onPress={handleConfigureRepo}>Configure Github Repo</Button>
+    <View style={styles.container}>
+      <Text style={styles.title}>Your Repositories</Text>
+      <Button title="Configure Github Repo" onPress={handleConfigureRepo} />
       <FlatList
         data={repos}
         keyExtractor={(item) => item.id.toString()}
@@ -81,16 +93,46 @@ export default function ReposScreen() {
           <Link
             href={{
               pathname: "/(tabs)/chat",
-              params: { owner: item.full_name.split("/")[0], repo: item.full_name.split("/")[1] },
+              params: {
+                owner: item.full_name.split("/")[0],
+                repo: item.full_name.split("/")[1],
+              },
             }}
             asChild
           >
-            <VStack style={{ padding: 2, borderBottomWidth: 1, borderBottomColor: "gray" }}>
-              <Text style={{ fontSize: 16, color: "blue" }}>{item.full_name}</Text>
-            </VStack>
+            <TouchableOpacity style={styles.repoItem}>
+              <Text style={styles.repoName}>{item.full_name}</Text>
+            </TouchableOpacity>
           </Link>
         )}
       />
-    </VStack>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  repoItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  repoName: {
+    fontSize: 16,
+  },
+});

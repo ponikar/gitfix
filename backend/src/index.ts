@@ -49,6 +49,8 @@ app.get("/api/repos/:installationId", async (c) => {
     );
   }
 });
+
+// list of branches
 app.get("/api/repos/:owner/:repo/branches", async (c) => {
   try {
     const { owner, repo } = c.req.param();
@@ -61,10 +63,12 @@ app.get("/api/repos/:owner/:repo/branches", async (c) => {
 
     const octokit = await octokitApp.getInstallationOctokit(installationId);
 
-    const { data } = await octokit.repos.listBranches({
+    const { data } = await octokit.rest.repos.listBranches({
       owner,
       repo,
     });
+
+    console.log("DATA", data);
 
     return c.json(data);
   } catch (err: any) {
@@ -76,6 +80,7 @@ app.get("/api/repos/:owner/:repo/branches", async (c) => {
   }
 });
 
+// tree information of that particular repo
 app.get("/api/repos/:owner/:repo/tree/:branch", async (c) => {
   try {
     const { owner, repo, branch } = c.req.param();
@@ -113,5 +118,7 @@ app.get("/api/repos/:owner/:repo/tree/:branch", async (c) => {
     return c.json({ error: "Failed to fetch tree", message: err.message }, 500);
   }
 });
+
+app.post("/api/suggest-fix", async (c) => {});
 
 export default app;

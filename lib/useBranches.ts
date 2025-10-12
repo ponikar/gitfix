@@ -1,14 +1,6 @@
 import { fetcher } from "@/lib/api";
+import { Branch } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-
-interface Branch {
-  name: string;
-  commit: {
-    sha: string;
-    url: string;
-  };
-  protected: boolean;
-}
 
 interface FetchBranchesParams {
   owner: string;

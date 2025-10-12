@@ -3,17 +3,26 @@ import { useTree } from "@/lib/useTree";
 import { useInstallationState } from "@/store/installation";
 import { useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, FlatList } from "react-native";
-import { VStack, Text } from "@expo/ui/swift-ui";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChatScreen() {
-  const { owner, repo } = useLocalSearchParams<{ owner: string; repo: string }>();
+  const { owner, repo } = useLocalSearchParams<{
+    owner: string;
+    repo: string;
+  }>();
   const { installationId } = useInstallationState();
-  const { data: branches, isLoading, isError, error } = useBranches({
+  const {
+    data: branches,
+    isLoading,
+    isError,
+    error,
+  } = useBranches({
     owner: owner!,
     repo: repo!,
     installationId,
   });
+  console.log("branches", branches);
 
   const defaultBranch = useMemo(() => {
     if (!branches) return null;
@@ -24,45 +33,56 @@ export default function ChatScreen() {
     return null;
   }, [branches]);
 
-  useTree({
+  const { data } = useTree({
     owner: owner!,
     repo: repo!,
     branch: defaultBranch!,
     installationId,
   });
 
+  console.log("branch", branches);
+  console.log("treee", data);
+
   if (isLoading) {
     return (
-      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ flex: 1 }}>
         <ActivityIndicator size="large" />
         <Text>Loading branches...</Text>
-      </VStack>
+      </View>
     );
   }
 
   if (isError) {
     return (
-      <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>Error</Text>
-        <Text>{error?.message}</Text>
-      </VStack>
+      <View style={{ flex: 1 }}>
+        <View>
+          <Text>Error</Text>
+          <Text>{error?.message}</Text>
+        </View>
+      </View>
     );
   }
 
   return (
-    <VStack style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 5 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>
         Branches for {owner}/{repo}
       </Text>
       <FlatList
-        data={branches}
+        data={branches ?? []}
         keyExtractor={(item) => item.commit.sha}
         renderItem={({ item }) => (
-          <VStack style={{ padding: 2, borderBottomWidth: 1, borderBottomColor: "gray" }}>
+          <View
+            style={{
+              padding: 2,
+              borderBottomWidth: 1,
+              borderBottomColor: "gray",
+            }}
+          >
             <Text style={{ fontSize: 16 }}>{item.name}</Text>
-          </VStack>
+          </View>
         )}
       />
-    </VStack>
+    </SafeAreaView>
   );
 }

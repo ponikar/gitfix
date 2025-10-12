@@ -29,8 +29,10 @@ export class Agent extends Github {
       }),
     });
 
-    return result.fix;
+    return result;
   }
 
-  async applyFix({}) {}
+  async applyFix({}) {
+    // this.makePR()
+  }
 }

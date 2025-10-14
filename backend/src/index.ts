@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { Agent } from "./agents";
 import { createOctokitApp } from "./octokit";
 
 export type Bindings = {
@@ -119,6 +120,32 @@ app.get("/api/repos/:owner/:repo/tree/:branch", async (c) => {
   }
 });
 
-app.post("/api/suggest-fix", async (c) => {});
+app.post("/api/suggest-fix", async (c) => {
+  try {
+    const installationId = c.req.header("x-installation-id");
+    if (!installationId) {
+      return c.json({ error: "x-installation-id header is required" }, 400);
+    }
+
+    const body = await c.req.json();
+
+    const agent = new Agent(installationId, c.env);
+
+    const stream = await agent.suggestFix({
+      owner: body.owner,
+      repo: body.repo,
+      userPrompt: body.userPrompt,
+      files: body.files,
+    });
+
+    return stream;
+  } catch (err: any) {
+    console.error(err);
+    return c.json(
+      { error: "Failed to suggest fix", message: err.message },
+      500
+    );
+  }
+});
 
 export default app;

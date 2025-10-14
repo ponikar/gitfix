@@ -37,10 +37,11 @@ const ChatInputInput = ({
 }: ChatInputInputProps) => {
   return (
     <TextInput
-      className="flex-1 px-2 bg-transparent dark:bg-gray-700 text-black dark:text-white"
+      className="flex-1 px-2 bg-transparent max-h-[50px] dark:bg-gray-700 text-black dark:text-white"
       placeholder={placeholder}
       value={value}
       onChangeText={onChangeText}
+      multiline
       placeholderTextColor="#000"
     />
   );

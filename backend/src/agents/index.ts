@@ -12,24 +12,40 @@ export class Agent extends Github {
   }
 
   async suggestFix({
-    filesUrls,
+    files,
     userPrompt,
+    owner,
+    repo,
   }: {
     userPrompt: string;
-    filesUrls: string[];
+    files: { path: string; sha: string }[];
+    owner: string;
+    repo: string;
   }) {
-    const content = await Promise.all(filesUrls.map(this.downloadFileContent));
+    const fileContents = await Promise.all(
+      files.map(async (file) => {
+        const content = await this.getFileContent(owner, repo, file.sha);
+        return `File: ${file.path}\n\n${content}`;
+      })
+    );
 
-    const result = await this.model.generateModelObject({
-      prompt: `${userPrompt}
-         files: ${content.join("\n")}
-        `,
-      schema: z.object({
-        fix: z.string(),
-      }),
-    });
+    const prompt = `
+      User prompt: ${userPrompt}
 
-    return result;
+      Here are the contents of the files the user has provided:
+      ---
+      ${fileContents.join("\n\n---\n\n")}
+      ---
+
+      Based on the user's prompt and the file contents, please provide a fix.
+      You can use the available tools to create a pull request with the fix.
+    `;
+
+    const tools = {
+      makePR: this.makePR,
+    };
+
+    return this.model.stream({ prompt, tools });
   }
 
   async applyFix({}) {

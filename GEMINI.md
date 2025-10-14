@@ -35,4 +35,6 @@ type State = {
 
 ### UI library
 
-- refer expo-ui.html as a documentation to understand how to use apis.
+- use tailwind to design components.
+- refer tailwind color plates
+- use white as card color for light mode and slate-800 for card component

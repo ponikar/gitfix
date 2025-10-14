@@ -1,6 +1,5 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { LanguageModel } from "ai";
-import { z } from "zod";
+import { createDataStreamResponse, LanguageModel, streamText } from "ai";
 import { Bindings } from "..";
 export class Model {
   private model: LanguageModel;
@@ -25,20 +24,22 @@ export class Model {
     }
   }
 
-  async generateModelObject({
-    prompt,
-    schema,
-  }: // tools = [],
-  {
-    prompt: string;
-    schema: z.ZodType;
-    // tools?: (typeof Tools.tools)[];
-  }) {
-    // const { object } = await generateObject({
-    //   model: this.model,
-    //   prompt,
-    //   schema,
-    // });
-    // return object;
+  stream({ prompt, tools }: { prompt: string; tools?: any }) {
+    const model = this.model;
+    return createDataStreamResponse({
+      async execute(dataStream) {
+        const result = await streamText({
+          model: model,
+          messages: [{ role: "user", content: prompt }],
+          tools,
+        });
+
+        result.mergeIntoDataStream(dataStream);
+      },
+      onError(error) {
+        console.error("[stream error]", error);
+        return error instanceof Error ? error.message : String(error);
+      },
+    });
   }
 }

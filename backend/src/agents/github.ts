@@ -12,8 +12,20 @@ export class Github {
     this.app = octokitApp.getInstallationOctokit(Number(installationId));
   }
 
-  protected async downloadFileContent(url: string) {
-    return "";
+  protected async getFileContent(owner: string, repo: string, file_sha: string) {
+    const octokit = await this.app;
+    const { data } = await octokit.rest.git.getBlob({
+      owner,
+      repo,
+      file_sha,
+    });
+
+    if (data.encoding !== "base64") {
+      throw new Error(`Unsupported encoding ${data.encoding}`);
+    }
+
+    const decoded = atob(data.content);
+    return decoded;
   }
 
   makePR = tool({

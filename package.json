@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@ai-sdk/react": "1.2.9",
     "@expo/ui": "~0.2.0-beta.6",
     "@expo/vector-icons": "^15.0.2",
     "@react-navigation/native": "^7.1.8",
@@ -16,6 +17,7 @@
     "expo": "~54.0.12",
     "expo-auth-session": "^7.0.8",
     "expo-constants": "~18.0.9",
+    "expo-fetch": "^0.0.0",
     "expo-font": "~14.0.8",
     "expo-linking": "~8.0.8",
     "expo-random": "^14.0.1",

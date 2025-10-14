@@ -1,13 +1,17 @@
 import { ChatInput } from "@/components/ChatInput";
 import { FileList } from "@/components/FileList";
+import { SimpleChat } from "@/components/SimpleChat";
+import { API_URL } from "@/lib/api";
 import { useBranches } from "@/lib/useBranches";
 import { useInstallationState } from "@/store/installation";
+import { useChat } from "@ai-sdk/react";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { fetch as expoFetch } from "expo/fetch";
+
 import { useLocalSearchParams } from "expo-router";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { KeyboardAvoidingView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function ChatScreen() {
   const { owner, repo } = useLocalSearchParams<{
     owner: string;
@@ -15,9 +19,34 @@ export default function ChatScreen() {
   }>();
   const [prompt, setPrompt] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
-  const fileRefs = useRef<string[]>([]);
+  const [fileRefs, setFileRefs] = useState<
+    {
+      path: string;
+      sha: string;
+    }[]
+  >([]);
 
   const { installationId } = useInstallationState();
+
+  const { messages, append, isLoading } = useChat({
+    api: `${API_URL}/api/suggest-fix`,
+    headers: {
+      "Content-Type": "application/json",
+      "x-installation-id": installationId?.toString() || "",
+      // Authorization: `Bearer ${session?.provider_token}`,
+    },
+    body: {
+      owner,
+      repo,
+      files: fileRefs,
+      userPrompt: prompt,
+    },
+    fetch: expoFetch as unknown as typeof globalThis.fetch,
+    onFinish(message) {
+      console.log("AI response finished:", message);
+    },
+  });
+
   const { data: branches } = useBranches({
     owner: owner!,
     repo: repo!,
@@ -34,17 +63,17 @@ export default function ChatScreen() {
   }, [branches]);
 
   const handleTextChange = (text: string) => {
-    // Sync file refs by checking which are still present in the text
-    fileRefs.current = fileRefs.current.filter((filePath) =>
-      text.includes(`@${filePath}`)
+    setFileRefs(
+      fileRefs.filter((filePath) => text.includes(`@${filePath.path}`))
     );
 
     setPrompt(text);
-    const trigger = " @";
+    const trigger = text.length === 1 ? "@" : " @";
     const triggerIndex = text.lastIndexOf(trigger);
 
     if (triggerIndex !== -1) {
       const potentialQuery = text.substring(triggerIndex + trigger.length);
+
       if (!potentialQuery.includes(" ")) {
         setSearchQuery(potentialQuery);
         return;
@@ -53,27 +82,26 @@ export default function ChatScreen() {
     setSearchQuery(null);
   };
 
-  const handleFileSelect = (filePath: string) => {
+  const handleFileSelect = (filePath: { path: string; sha: string }) => {
     const atIndex = prompt.lastIndexOf("@");
-    const newPrompt = prompt.substring(0, atIndex + 1) + filePath + " ";
+    const newPrompt = prompt.substring(0, atIndex + 1) + filePath.path + " ";
     setPrompt(newPrompt);
     setSearchQuery(null);
 
-    // Add the selected file to the ref if it's not already there
-    if (!fileRefs.current.includes(filePath)) {
-      fileRefs.current.push(filePath);
-    }
+    setFileRefs((f) => [...f, filePath]);
   };
 
   const handleSend = () => {
     console.log("Sending prompt:", prompt);
-    console.log("With file references:", fileRefs.current);
 
-    // Reset state after sending
+    append({ role: "user", content: prompt });
+
     setPrompt("");
     setSearchQuery(null);
-    fileRefs.current = [];
+    setFileRefs([]);
   };
+
+  console.log("searchQuery", searchQuery);
 
   return (
     <KeyboardAvoidingView
@@ -82,7 +110,7 @@ export default function ChatScreen() {
       behavior="height"
     >
       <SafeAreaView style={{ flex: 1 }}>
-        <View className="flex-1" />
+        <SimpleChat messages={messages} />
         <ChatInput.Container>
           {searchQuery !== null && (
             <FileList

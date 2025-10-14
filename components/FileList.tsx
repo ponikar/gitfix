@@ -15,7 +15,7 @@ type FileListProps = {
   repo: string;
   branch: string;
   searchQuery: string;
-  onFileSelect: (path: string) => void;
+  onFileSelect: (f: { path: string; sha: string }) => void;
 };
 
 export function FileList({
@@ -48,7 +48,12 @@ export function FileList({
 
   const renderItem = ({ item }: { item: TreeEntry }) => (
     <TouchableOpacity
-      onPress={() => onFileSelect(item.path)}
+      onPress={() =>
+        onFileSelect({
+          path: item.path,
+          sha: item.sha,
+        })
+      }
       className="flex-row items-center p-3 border-b border-gray-200"
     >
       <AntDesign name="file" size={16} color="#666" />

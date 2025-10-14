@@ -1,4 +1,4 @@
-import * as z from "zod";
+import { Message } from "ai";
 import { Bindings } from "..";
 import { Github } from "./github";
 import { Model } from "./model";
@@ -12,40 +12,41 @@ export class Agent extends Github {
   }
 
   async suggestFix({
-    files,
+    files = [],
     userPrompt,
     owner,
     repo,
+    messages = [],
   }: {
     userPrompt: string;
     files: { path: string; sha: string }[];
     owner: string;
     repo: string;
+    messages: Message[];
   }) {
-    const fileContents = await Promise.all(
-      files.map(async (file) => {
-        const content = await this.getFileContent(owner, repo, file.sha);
-        return `File: ${file.path}\n\n${content}`;
-      })
-    );
+    const fileContents = files.length
+      ? await Promise.all(
+          files.map(async (file) => {
+            const content = await this.getFileContent(owner, repo, file.sha);
+            return `File: ${file.path}\n\n${content}`;
+          })
+        )
+      : [];
 
-    const prompt = `
-      User prompt: ${userPrompt}
-
-      Here are the contents of the files the user has provided:
-      ---
-      ${fileContents.join("\n\n---\n\n")}
-      ---
-
-      Based on the user's prompt and the file contents, please provide a fix.
-      You can use the available tools to create a pull request with the fix.
-    `;
-
-    const tools = {
-      makePR: this.makePR,
-    };
-
-    return this.model.stream({ prompt, tools });
+    return this.model.stream({
+      messages: fileContents.length
+        ? [
+            ...messages,
+            {
+              id: new Date().getTime().toString(),
+              role: "data",
+              content: `
+            ${fileContents.map((p, index) => `${files[index]} -> ${p}`)}
+          `,
+            },
+          ]
+        : messages,
+    });
   }
 
   async applyFix({}) {

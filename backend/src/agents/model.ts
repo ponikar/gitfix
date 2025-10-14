@@ -1,5 +1,10 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createDataStreamResponse, LanguageModel, streamText } from "ai";
+import {
+  createDataStreamResponse,
+  LanguageModel,
+  Message,
+  streamText,
+} from "ai";
 import { Bindings } from "..";
 export class Model {
   private model: LanguageModel;
@@ -7,13 +12,13 @@ export class Model {
   constructor(
     env: Bindings,
     provider: string = "google",
-    modelName: string = "gemini-1.5-flash"
+    modelName: string = "gemini-2.0-flash-001"
   ) {
     if (provider === "google") {
       const google = createGoogleGenerativeAI({
         apiKey: env.GOOGLE_API_KEY,
       });
-      this.model = google(modelName);
+      this.model = google("gemini-2.0-flash-001");
       // } else if (provider === "openai") {
       //   const openai = createOpenAI({
       //     apiKey: env.OPENAI_API_KEY,
@@ -24,14 +29,21 @@ export class Model {
     }
   }
 
-  stream({ prompt, tools }: { prompt: string; tools?: any }) {
+  stream({ tools, messages }: { tools?: any; messages: Message[] }) {
     const model = this.model;
     return createDataStreamResponse({
       async execute(dataStream) {
         const result = await streamText({
           model: model,
-          messages: [{ role: "user", content: prompt }],
+          messages: messages,
           tools,
+          // TODO: UPDATE THIS
+          system: `
+           Keep the response short, simple and straightforward. 
+           Help user go t@hrough the codebase. 
+           If file content is mentioned, stricly rely on that. 
+           Do not made up any response.
+          `,
         });
 
         result.mergeIntoDataStream(dataStream);

@@ -1,8 +1,8 @@
+import { tool } from "ai";
 import { Octokit } from "octokit";
+import { z } from "zod";
 import { Bindings } from "..";
 import { createOctokitApp } from "../octokit";
-import { tool } from "ai";
-import { z } from "zod";
 
 export class Github {
   app: Promise<Octokit>;
@@ -12,7 +12,11 @@ export class Github {
     this.app = octokitApp.getInstallationOctokit(Number(installationId));
   }
 
-  protected async getFileContent(owner: string, repo: string, file_sha: string) {
+  protected async getFileContent(
+    owner: string,
+    repo: string,
+    file_sha: string
+  ) {
     const octokit = await this.app;
     const { data } = await octokit.rest.git.getBlob({
       owner,
@@ -25,6 +29,9 @@ export class Github {
     }
 
     const decoded = atob(data.content);
+
+    console.log("file content ->", decoded);
+
     return decoded;
   }
 
@@ -34,8 +41,12 @@ export class Github {
       owner: z.string().describe("The owner of the repository."),
       repo: z.string().describe("The name of the repository."),
       title: z.string().describe("The title of the pull request."),
-      head: z.string().describe("The name of the branch where the changes are implemented."),
-      base: z.string().describe("The name of the branch you want the changes pulled into."),
+      head: z
+        .string()
+        .describe("The name of the branch where the changes are implemented."),
+      base: z
+        .string()
+        .describe("The name of the branch you want the changes pulled into."),
       body: z.string().optional().describe("The contents of the pull request."),
     }),
     execute: async ({ owner, repo, title, head, base, body }) => {

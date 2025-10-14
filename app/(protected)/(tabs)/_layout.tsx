@@ -1,28 +1,39 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Link, Tabs } from "expo-router";
-import { Pressable } from "react-native";
+import { Tabs } from "expo-router";
 
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+import Octicons from "@expo/vector-icons/Octicons";
+
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>["name"];
   color: string;
+  focused: boolean;
 }) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
+  return (
+    <Octicons
+      name="feed-repo"
+      size={24}
+      color={!props.focused ? "#6b7280" : "#111827"}
+    />
+  );
 }
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#000",
-        headerShown: false,
+        headerShown: true,
       }}
     >
       <Tabs.Screen
         name="repos"
         options={{
           title: "Repos",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          tabBarLabelStyle: {
+            display: "none",
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon focused={focused} name="code" color={color} />
+          ),
         }}
       />
     </Tabs>

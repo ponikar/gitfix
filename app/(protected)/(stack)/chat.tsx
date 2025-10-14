@@ -1,9 +1,10 @@
 import { useBranches } from "@/lib/useBranches";
 import { useTree } from "@/lib/useTree";
 import { useInstallationState } from "@/store/installation";
+import { Button, ContextMenu, Host, Picker } from "@expo/ui/swift-ui";
 import { useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChatScreen() {
@@ -68,21 +69,35 @@ export default function ChatScreen() {
       <Text className="text-2xl">
         Branches for {owner}/{repo}
       </Text>
-      <FlatList
-        data={branches ?? []}
-        keyExtractor={(item) => item.commit.sha}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 2,
-              borderBottomWidth: 1,
-              borderBottomColor: "gray",
-            }}
-          >
-            <Text style={{ fontSize: 16 }}>{item.name}</Text>
-          </View>
-        )}
-      />
+      <Host style={{ width: 150, height: 50 }}>
+        <ContextMenu>
+          <ContextMenu.Items>
+            <Button
+              systemImage="person.crop.circle.badge.xmark"
+              onPress={() => console.log("Pressed1")}
+            >
+              Hello
+            </Button>
+            <Button
+              variant="bordered"
+              systemImage="heart"
+              onPress={() => console.log("Pressed2")}
+            >
+              Love it
+            </Button>
+            <Picker
+              label="Doggos"
+              options={["very", "veery", "veeery", "much"]}
+              variant="menu"
+              selectedIndex={0}
+              onOptionSelected={({ nativeEvent: { index } }) => {}}
+            />
+          </ContextMenu.Items>
+          <ContextMenu.Trigger>
+            <Button variant="bordered">Show Menu</Button>
+          </ContextMenu.Trigger>
+        </ContextMenu>
+      </Host>
     </SafeAreaView>
   );
 }

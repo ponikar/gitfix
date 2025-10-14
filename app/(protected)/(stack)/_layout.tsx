@@ -4,7 +4,7 @@ export default function StackLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
       }}
     >
       <Stack.Screen name="chat" />

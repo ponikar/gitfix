@@ -83,8 +83,8 @@ export default function ReposScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Your Repositories</Text>
+    <View className="flex-1 bg-red-600">
+      <Text className="text-5xl">Your Repositories</Text>
       <Button title="Configure Github Repo" onPress={handleConfigureRepo} />
       <FlatList
         data={repos}
@@ -92,7 +92,7 @@ export default function ReposScreen() {
         renderItem={({ item }) => (
           <Link
             href={{
-              pathname: "/(tabs)/chat",
+              pathname: "/chat",
               params: {
                 owner: item.full_name.split("/")[0],
                 repo: item.full_name.split("/")[1],
@@ -111,10 +111,6 @@ export default function ReposScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
   center: {
     flex: 1,
     justifyContent: "center",

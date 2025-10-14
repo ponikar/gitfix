@@ -1,66 +1,31 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
+import { useAuthState } from "@/store/auth";
+import { Slot, SplashScreen, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import "react-native-reanimated";
-
 import "../global.css";
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "(tabs)",
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient();
-
-function RootLayoutNav() {
-  return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-      <Stack.Screen name="callback" />
-    </Stack>
-  );
-}
-
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+  const { accessToken } = useAuthState();
+  const segments = useSegments();
+  const router = useRouter();
+  const inProtectedGroup = segments[0] === "(protected)";
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    const timer = setTimeout(() => {
+      if (accessToken && !inProtectedGroup) {
+        // navigate only when needed
+        router.replace("/(protected)/(tabs)/repos");
+      } else if (!accessToken && inProtectedGroup) {
+        router.replace("/(guest)");
+      }
 
-  if (!loaded) {
-    return null;
-  }
+      SplashScreen.hide();
+    }, 100);
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <RootLayoutNav />
-    </QueryClientProvider>
-  );
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [accessToken, inProtectedGroup]);
+
+  // Slot will just render child routes
+  return <Slot />;
 }

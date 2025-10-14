@@ -17,7 +17,9 @@ function RootLayoutNav() {
       screenOptions={{
         headerShown: false,
       }}
+      initialRouteName="(tabs)"
     >
+      <Stack.Screen name="(stack)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       <Stack.Screen name="callback" />

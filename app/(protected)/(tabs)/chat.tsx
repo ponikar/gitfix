@@ -65,7 +65,7 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 5 }}>
+      <Text className="text-2xl">
         Branches for {owner}/{repo}
       </Text>
       <FlatList

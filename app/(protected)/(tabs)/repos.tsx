@@ -83,7 +83,7 @@ export default function ReposScreen() {
   }
 
   return (
-    <View className="flex-1 bg-red-600">
+    <View className="flex-1">
       <Text className="text-5xl">Your Repositories</Text>
       <Button title="Configure Github Repo" onPress={handleConfigureRepo} />
       <FlatList

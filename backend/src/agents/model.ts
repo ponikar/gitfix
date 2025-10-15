@@ -1,11 +1,13 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import {
   createDataStreamResponse,
+  generateObject,
   generateText,
   LanguageModel,
   Message,
   streamText,
 } from "ai";
+import { z } from "zod";
 import { Bindings } from "..";
 export class Model {
   private model: LanguageModel;
@@ -76,7 +78,7 @@ export class Model {
     tools?: any;
     messages: Message[];
     systemPrompt?: string;
-  }): Promise<string> {
+  }) {
     const model = this.model;
 
     const result = await generateText({
@@ -87,6 +89,27 @@ export class Model {
       system: systemPrompt,
     });
 
-    return result.text;
+    return result;
+  }
+
+  async generateObject({
+    messages,
+    systemPrompt,
+    schema,
+  }: {
+    messages: Message[];
+    systemPrompt?: string;
+    schema: z.ZodSchema<any>;
+  }) {
+    const model = this.model;
+
+    const result = await generateObject({
+      model: model,
+      schema,
+      messages: messages,
+      system: systemPrompt,
+    });
+
+    return result;
   }
 }

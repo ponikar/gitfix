@@ -67,24 +67,67 @@ export class Github {
           })
         );
 
-        const response = await this.model.getText({
-          systemPrompt: `
-            Use this file content to help resolve user's query. 
-            Only stick to this file content.
+        const textResponseSchema = z.object({
+          type: z.literal("TEXT_RESPONSE"),
+          response: z
+            .string()
+            .describe("A simple text response to the user's query."),
+        });
 
-           
+        const diffResponseSchema = z.object({
+          type: z.literal("GIT_DIFF"),
+          files: z
+            .array(
+              z.object({
+                path: z.string().describe("The path of the file."),
+                originalContent: z
+                  .string()
+                  .describe("The original part content of the file."),
+                newContent: z
+                  .string()
+                  .describe("The new, modified content of the file."),
+              })
+            )
+            .describe(
+              "An array of files with their original and new part of content for diffing."
+            ),
+        });
+
+        const responseSchema = z.union([
+          textResponseSchema,
+          diffResponseSchema,
+        ]);
+
+        const { object: response } = await this.model.generateObject({
+          schema: responseSchema,
+          systemPrompt: `
+            You are a helpful AI assistant. Based on the user's query and the provided file content, you must decide on the format of your response.
+
+            You have two choices:
+
+            1.  **Text Response**: If the user is asking a question, wants an explanation, or anything that can be answered with plain text, use the 'TEXT_RESPONSE' schema.
+
+            2.  **Git Diff**: If the user wants to perform a change, refactor, or fix code, provide the original and the proposed new code for the relevant files using the 'GIT_DIFF' schema. You must provide the complete original and new content for each file you are modifying.
+
+            Analyze the user's query and the file content carefully to make the right choice.
+
+            User Query: ${aiPrompt}
           `,
           messages: [
             {
               id: "1",
-              content: ` User Query: ${aiPrompt}
-            ${fileContents.map((f) => `${f.path} -> ${f.content}`).join("\n")}`,
+              content: `
+                Here is the content of the files:
+                ${fileContents
+                  .map((f) => `File: ${f.path}\n\n\`\`\`\n${f.content}\n\`\`\``)
+                  .join("\n\n")}
+              `,
               role: "user",
             },
           ],
         });
 
-        return { fileContents, type: "READ_FILE", response };
+        return { fileContents, response };
       } catch (error: any) {
         return { error: error.message };
       }
@@ -117,6 +160,60 @@ export class Github {
           body,
         });
         return { pullRequestUrl: data.html_url };
+      } catch (error: any) {
+        return { error: error.message };
+      }
+    },
+  });
+
+  generateDiff = tool({
+    description:
+      "Generate a git diff to highlight changes between old and new code.",
+    parameters: z.object({
+      files: z.string().describe("The path of the file, e.g., 'src/index.js'."),
+      oldChanges: z.string().describe("The original code content."),
+      newChanges: z.string().describe("The modified code content."),
+    }),
+    execute: async ({ files, oldChanges, newChanges }) => {
+      try {
+        const response = await this.model.getText({
+          systemPrompt: `
+            You are an expert at creating git diffs.
+            Generate a git diff for the provided file.
+            The user will provide the file path, the old code, and the new code.
+            Your response should be ONLY the git diff, without any extra explanation.
+            The diff should be in a format that can be used by other tools.
+            For example:
+            \`\`\`diff
+            --- a/file.js
+            +++ b/file.js
+            @@ -1,4 +1,4 @@
+             console.log("hello");
+            -const old = 1;
+            +const new = 2;
+             console.log("world");
+            \`\`\`
+          `,
+          messages: [
+            {
+              id: "1",
+              role: "user",
+              content: `
+                Generate a diff for the file: ${files}
+
+                <<< OLD CODE
+                ${oldChanges}
+                >>> OLD CODE
+
+                <<< NEW CODE
+                ${newChanges}
+                >>> NEW CODE
+              `,
+            },
+          ],
+        });
+
+        return { diff: response, type: "GIT_DIFF" };
       } catch (error: any) {
         return { error: error.message };
       }

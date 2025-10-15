@@ -104,12 +104,12 @@ export default function ChatScreen() {
   console.log("searchQuery", searchQuery);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      keyboardVerticalOffset={60}
-      behavior="height"
-    >
-      <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView edges={["bottom"]} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={60}
+        behavior="height"
+      >
         <SimpleChat messages={messages} />
         <ChatInput.Container>
           {searchQuery !== null && (
@@ -133,7 +133,7 @@ export default function ChatScreen() {
           </View>
           <ChatInput.BranchPicker owner={owner!} repo={repo!} />
         </ChatInput.Container>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

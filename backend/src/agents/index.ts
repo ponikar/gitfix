@@ -29,6 +29,9 @@ export class Agent extends Github {
       messages,
       systemPrompt: files.length
         ? `
+
+       DO NOT ASK USER DETAILS FOR path and sha, Pick the details from here.
+       USE THIS DETAILS WHEN CALLING TOOL
        Use this as references to download files:
         Owner: ${owner}, Repo: ${repo}
         To Downloads files use this information

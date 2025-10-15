@@ -13,7 +13,6 @@ export class Agent extends Github {
 
   async suggestFix({
     files = [],
-    userPrompt,
     owner,
     repo,
     messages = [],
@@ -24,28 +23,19 @@ export class Agent extends Github {
     repo: string;
     messages: Message[];
   }) {
-    const fileContents = files.length
-      ? await Promise.all(
-          files.map(async (file) => {
-            const content = await this.getFileContent(owner, repo, file.sha);
-            return `File: ${file.path}\n\n${content}`;
-          })
-        )
-      : [];
-
+    const getFileContents = this.getFileContents;
     return this.model.stream({
-      messages: fileContents.length
-        ? [
-            ...messages,
-            {
-              id: new Date().getTime().toString(),
-              role: "data",
-              content: `
-            ${fileContents.map((p, index) => `${files[index]} -> ${p}`)}
-          `,
-            },
-          ]
-        : messages,
+      tools: { downloadFileContent: getFileContents },
+      messages,
+      systemPrompt: files.length
+        ? `
+       Use this as references to download files:
+        Owner: ${owner}, Repo: ${repo}
+        To Downloads files use this information
+        ${files.map((d) => `path: ${d.path}, sha: ${d.sha}`).join("\n")}
+        }
+      `
+        : "",
     });
   }
 

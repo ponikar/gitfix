@@ -8,6 +8,9 @@ export interface SimpleChatProps {
 export function SimpleChat({ messages }: SimpleChatProps) {
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === "user";
+
+    console.log("tool calling", item.parts);
+
     return (
       <View
         className={`p-3 rounded-lg my-1 max-w-[80%] ${

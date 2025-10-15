@@ -29,13 +29,23 @@ export class Model {
     }
   }
 
-  stream({ tools, messages }: { tools?: any; messages: Message[] }) {
+  stream({
+    tools,
+    messages,
+    systemPrompt,
+  }: {
+    tools?: any;
+    messages: Message[];
+    systemPrompt?: string;
+  }) {
     const model = this.model;
+
     return createDataStreamResponse({
       async execute(dataStream) {
         const result = await streamText({
           model: model,
           messages: messages,
+          toolChoice: "auto",
           tools,
           // TODO: UPDATE THIS
           system: `
@@ -43,6 +53,8 @@ export class Model {
            Help user go t@hrough the codebase. 
            If file content is mentioned, stricly rely on that. 
            Do not made up any response.
+
+           ${systemPrompt}
           `,
         });
 

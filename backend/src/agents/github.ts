@@ -35,6 +35,38 @@ export class Github {
     return decoded;
   }
 
+  getFileContents = tool({
+    description: "Get the content of multiple files from a GitHub repository.",
+    parameters: z.object({
+      owner: z.string().describe("The owner of the repository."),
+      repo: z.string().describe("The name of the repository."),
+      files: z
+        .array(
+          z.object({
+            path: z.string().describe("The path to the file."),
+            sha: z.string().describe("The SHA of the file blob."),
+          })
+        )
+        .describe("An array of file objects containing path and sha."),
+    }),
+    execute: async ({ owner, repo, files }) => {
+      try {
+        const fileContents = await Promise.all(
+          files.map(async (file) => {
+            const content = await this.getFileContent(owner, repo, file.sha);
+            return { path: file.path, content };
+          })
+        );
+
+        console.log("[tool calling donw] -> file content", fileContents);
+
+        return { fileContents };
+      } catch (error: any) {
+        return { error: error.message };
+      }
+    },
+  });
+
   makePR = tool({
     description: "Create a pull request.",
     parameters: z.object({

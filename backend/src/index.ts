@@ -149,4 +149,30 @@ app.post("/api/suggest-fix", async (c) => {
   }
 });
 
+app.post("/api/apply-fix", async (c) => {
+  try {
+    const installationId = c.req.header("x-installation-id");
+    if (!installationId) {
+      return c.json({ error: "x-installation-id header is required" }, 400);
+    }
+
+    const body = await c.req.json();
+
+    const agent = new Agent(installationId, c.env);
+
+    const result = await agent.applyFix({
+      owner: body.owner,
+      repo: body.repo,
+      base: body.base,
+      head: body.head,
+      files: body.files,
+    });
+
+    return c.json(result);
+  } catch (err: any) {
+    console.error(err);
+    return c.json({ error: "Failed to apply fix", message: err.message }, 500);
+  }
+});
+
 export default app;

@@ -110,7 +110,13 @@ export default function ChatScreen() {
         keyboardVerticalOffset={60}
         behavior="height"
       >
-        <SimpleChat messages={messages} />
+        <SimpleChat
+          messages={messages}
+          owner={owner!}
+          repo={repo!}
+          base={defaultBranch}
+          installationId={installationId!}
+        />
         <ChatInput.Container>
           {searchQuery !== null && (
             <FileList

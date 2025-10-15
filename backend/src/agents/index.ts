@@ -42,7 +42,25 @@ export class Agent extends Github {
     });
   }
 
-  async applyFix({}) {
-    // this.makePR()
+  async applyFix({
+    owner,
+    repo,
+    base,
+    head,
+    files,
+  }: {
+    owner: string;
+    repo: string;
+    base: string;
+    head: string;
+    files: { path: string; content: string }[];
+  }) {
+    return this.applyFixAndRaisePR({
+      owner,
+      repo,
+      base,
+      head,
+      files,
+    });
   }
 }

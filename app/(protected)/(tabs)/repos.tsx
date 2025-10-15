@@ -10,6 +10,7 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
 import {
   ActivityIndicator,
+  Button,
   FlatList,
   Text,
   TouchableOpacity,
@@ -81,6 +82,8 @@ export default function ReposScreen() {
 
   return (
     <View className="flex-1 dark:bg-gray-900 bg-white">
+      <Button title="Configure Github Repo" onPress={handleConfigureRepo} />
+
       <FlatList
         data={repos}
         keyExtractor={(item) => item.id.toString()}

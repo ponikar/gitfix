@@ -1,10 +1,23 @@
+import { useRaisePR } from "@/lib/useRaisePR";
 import { type Message } from "@ai-sdk/react";
 import { ToolInvocation } from "@ai-sdk/ui-utils";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { structuredPatch } from "diff";
-import { FlatList, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Linking,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 
 export interface SimpleChatProps {
   messages: Message[];
+  owner: string;
+  repo: string;
+  base: string;
+  installationId: number;
 }
 
 interface Hunk {
@@ -81,10 +94,20 @@ export const DiffView = ({
 
 const ToolInvocationContent = ({
   toolInvocation,
+  owner,
+  repo,
+  base,
+  installationId,
+  messages,
 }: {
   toolInvocation: ToolInvocation;
+  owner: string;
+  repo: string;
+  base: string;
+  installationId: number;
+  messages: Message[];
 }) => {
-  console.log("toolInvocation", toolInvocation);
+  const { mutate: raisePR, isPending, isSuccess, data } = useRaisePR();
 
   if (toolInvocation.toolName === "downloadFileContent") {
     if (toolInvocation.state === "result") {
@@ -104,6 +127,30 @@ const ToolInvocationContent = ({
                   newContent: string;
                 }[];
               };
+        };
+
+        const handleRaisePR = () => {
+          if (response.type !== "GIT_DIFF") return;
+
+          const head = `gitfix/patch-${Date.now()}`;
+          const files = response.files.map((f) => ({
+            path: f.path,
+            content: f.newContent,
+          }));
+
+          raisePR({
+            owner,
+            repo,
+            base,
+            head,
+            files,
+            installationId,
+            messages,
+          });
+        };
+
+        const redirectToGithub = (url: string) => {
+          Linking.openURL(url);
         };
 
         const readingFilesView = (
@@ -142,6 +189,30 @@ const ToolInvocationContent = ({
                   newContent={file.newContent}
                 />
               ))}
+              {isSuccess && data ? (
+                <View className="mt-4 flex items-center gap-4 flex-row">
+                  <Pressable
+                    onPress={() => redirectToGithub(data.pullRequestUrl)}
+                    disabled={isPending}
+                    className="bg-white flex flex-row gap-2 items-center rounded-md p-2"
+                  >
+                    <AntDesign name="github" size={20} color="black" />
+                    <Text className="text-black font-bold">View on Github</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handleRaisePR}
+                  disabled={isPending}
+                  className="bg-blue-500 rounded-md p-2 mt-4 self-start"
+                >
+                  {isPending ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text className="text-white font-bold">Raise PR</Text>
+                  )}
+                </Pressable>
+              )}
             </View>
           );
         }
@@ -161,11 +232,15 @@ const ToolInvocationContent = ({
   return null;
 };
 
-export function SimpleChat({ messages }: SimpleChatProps) {
+export function SimpleChat({
+  messages,
+  owner,
+  repo,
+  base,
+  installationId,
+}: SimpleChatProps) {
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === "user";
-
-    console.log("tool__", item.parts);
 
     const toolInvocations = item.parts
       ?.filter((part) => part.type === "tool-invocation")
@@ -195,6 +270,11 @@ export function SimpleChat({ messages }: SimpleChatProps) {
               <ToolInvocationContent
                 key={`${toolInvocation.toolCallId}-${index}`}
                 toolInvocation={toolInvocation}
+                owner={owner}
+                repo={repo}
+                base={base}
+                installationId={installationId}
+                messages={messages}
               />
             ))}
           </View>

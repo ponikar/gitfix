@@ -3,13 +3,17 @@ import { Octokit } from "octokit";
 import { z } from "zod";
 import { Bindings } from "..";
 import { createOctokitApp } from "../octokit";
+import { Model } from "./model";
 
 export class Github {
   app: Promise<Octokit>;
 
+  model: Model;
+
   constructor(installationId: string, env: Bindings) {
     const octokitApp = createOctokitApp(env);
     this.app = octokitApp.getInstallationOctokit(Number(installationId));
+    this.model = new Model(env);
   }
 
   protected async getFileContent(
@@ -38,6 +42,11 @@ export class Github {
   getFileContents = tool({
     description: "Get the content of multiple files from a GitHub repository.",
     parameters: z.object({
+      aiPrompt: z
+        .string()
+        .describe(
+          "AI instruction that contain user query to perform certain opreations on file."
+        ),
       owner: z.string().describe("The owner of the repository."),
       repo: z.string().describe("The name of the repository."),
       files: z
@@ -49,7 +58,7 @@ export class Github {
         )
         .describe("An array of file objects containing path and sha."),
     }),
-    execute: async ({ owner, repo, files }) => {
+    execute: async ({ owner, repo, files, aiPrompt }) => {
       try {
         const fileContents = await Promise.all(
           files.map(async (file) => {
@@ -58,9 +67,24 @@ export class Github {
           })
         );
 
-        console.log("[tool calling donw] -> file content", fileContents);
+        const response = await this.model.getText({
+          systemPrompt: `
+            Use this file content to help resolve user's query. 
+            Only stick to this file content.
 
-        return { fileContents };
+           
+          `,
+          messages: [
+            {
+              id: "1",
+              content: ` User Query: ${aiPrompt}
+            ${fileContents.map((f) => `${f.path} -> ${f.content}`).join("\n")}`,
+              role: "user",
+            },
+          ],
+        });
+
+        return { fileContents, type: "READ_FILE", response };
       } catch (error: any) {
         return { error: error.message };
       }

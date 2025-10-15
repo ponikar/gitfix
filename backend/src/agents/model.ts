@@ -1,6 +1,7 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import {
   createDataStreamResponse,
+  generateText,
   LanguageModel,
   Message,
   streamText,
@@ -65,5 +66,27 @@ export class Model {
         return error instanceof Error ? error.message : String(error);
       },
     });
+  }
+
+  async getText({
+    tools,
+    messages,
+    systemPrompt,
+  }: {
+    tools?: any;
+    messages: Message[];
+    systemPrompt?: string;
+  }): Promise<string> {
+    const model = this.model;
+
+    const result = await generateText({
+      model: model,
+      messages: messages,
+      toolChoice: "auto",
+      tools,
+      system: systemPrompt,
+    });
+
+    return result.text;
   }
 }

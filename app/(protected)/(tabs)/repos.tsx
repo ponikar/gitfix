@@ -21,7 +21,14 @@ export default function ReposScreen() {
   const { githubState, accessToken } = useAuthState();
   const { installationId } = useInstallationState();
   const { setInstallationId } = useInstallationActions();
-  const { data: repos, isLoading, isError, error } = useRepos(installationId);
+  const {
+    data: repos,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useRepos(installationId);
 
   useEffect(() => {
     const fetchInstallationId = async () => {
@@ -86,6 +93,8 @@ export default function ReposScreen() {
 
       <FlatList
         data={repos}
+        onRefresh={refetch}
+        refreshing={isRefetching}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <Link
@@ -98,9 +107,9 @@ export default function ReposScreen() {
             }}
             asChild
           >
-            <TouchableOpacity className="bg-gray-50 border-b border-gray-200 flex flex-row items-center gap-2 dark:bg-gray-800 rounded-lg p-3 mb-4">
-              <AntDesign name="github" size={24} color="black" />
-              <Text className="text-xl font-medium text-black dark:text-white">
+            <TouchableOpacity className="bg-white border-b border-gray-200 flex flex-row items-center gap-2 dark:bg-gray-800 rounded-lg p-3">
+              <AntDesign name="github" size={22} color="black" />
+              <Text className="text-base font-medium text-black dark:text-white">
                 {item.full_name}
               </Text>
             </TouchableOpacity>

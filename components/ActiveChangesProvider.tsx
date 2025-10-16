@@ -7,14 +7,15 @@ interface FileChanges {
 }
 
 interface State {
-  activeChanges: FileChanges;
+  activeChanges: { [threadId: string]: FileChanges };
   prLinks: Map<string, string>;
 }
 
 interface ChangesContextType {
   state: State;
-  setActiveChanges: (changes: FileChanges) => void;
-  clearActiveChanges: () => void;
+  setActiveChanges: (threadId: string, changes: FileChanges) => void;
+  getActiveChanges: (threadId: string) => FileChanges;
+  clearActiveChanges: (threadId: string) => void;
   setPrLink: (messageId: string, prLink: string) => void;
 }
 
@@ -36,14 +37,24 @@ export function ChangesProvider({ children }: ChangesProviderProps) {
     prLinks: new Map(JSON.parse(prLinksData || "[]")),
   });
 
-  const setActiveChanges = (newChanges: FileChanges) => {
-    state.current.activeChanges = newChanges;
-    setItem(Storage.ACTIVE_CHANGES, JSON.stringify(newChanges));
+  const setActiveChanges = (threadId: string, newChanges: FileChanges) => {
+    state.current.activeChanges[threadId] = newChanges;
+    setItem(
+      Storage.ACTIVE_CHANGES,
+      JSON.stringify(state.current.activeChanges)
+    );
   };
 
-  const clearActiveChanges = () => {
-    state.current.activeChanges = {};
-    setItem(Storage.ACTIVE_CHANGES, null);
+  const getActiveChanges = (threadId: string): FileChanges => {
+    return state.current.activeChanges[threadId] || {};
+  };
+
+  const clearActiveChanges = (threadId: string) => {
+    delete state.current.activeChanges[threadId];
+    setItem(
+      Storage.ACTIVE_CHANGES,
+      JSON.stringify(state.current.activeChanges)
+    );
   };
 
   function setPrLink(messageId: string, prLink: string) {
@@ -59,6 +70,7 @@ export function ChangesProvider({ children }: ChangesProviderProps) {
       value={{
         state: state.current,
         setActiveChanges,
+        getActiveChanges,
         clearActiveChanges,
         setPrLink,
       }}

@@ -6,4 +6,5 @@ export const Storage = {
   ACTIVE_CHANGES: "ACTIVE_CHANGES",
   PR_LINKS: "PR_LINKS",
   THREADS: "THREADS",
+  FILE_REFS: "FILE_REFS",
 } as const;

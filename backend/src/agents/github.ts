@@ -11,6 +11,25 @@ export class Github {
   model: Model;
 
   activeChanges: { [filePath: string]: string } = {};
+  owner: string = "";
+  repo: string = "";
+
+  setActiveChanges(activeChanges: { [filePath: string]: string }) {
+    this.activeChanges = activeChanges;
+    console.log("Active changes set", this.activeChanges);
+  }
+
+  setOwner(owner: string) {
+    this.owner = owner;
+    console.log("Owner set", this.owner);
+  }
+
+  setRepo(repo: string) {
+    this.repo = repo;
+    console.log("Repo set", this.repo);
+  }
+
+  fileDetails: { path: string; sha: string }[] = [];
 
   constructor(installationId: string, env: Bindings) {
     const octokitApp = createOctokitApp(env);
@@ -36,50 +55,41 @@ export class Github {
 
     const decoded = atob(data.content);
 
-    console.log("file content ->", decoded);
-
     return decoded;
   }
 
-  protected setActiveChanges(changes: { [filePath: string]: string }) {
-    this.activeChanges = changes;
+  setFileDetails(files: { path: string; sha: string }[]) {
+    this.fileDetails = files;
+    console.log("Setting file details", this.fileDetails);
   }
 
   getFileContents = tool({
-    description:
-      "Get the content of multiple files from a GitHub repository. If you have previously modified a file and the user wants to modify it again, provide the content from your last modification in the `previousContent` field for that file.",
+    description: "Get the content of multiple files from a GitHub repository",
     parameters: z.object({
       aiPrompt: z
         .string()
         .describe(
           "Must share AI instruction that contain user query to perform certain opreations on file."
         ),
-      owner: z.string().describe("The owner of the repository."),
-      repo: z.string().describe("The name of the repository."),
       changeType: z
         .enum(["incremental", "new"])
         .describe(
           "Determine if the user is asking for incremental changes to previously modified content or new changes from scratch."
-        ),
-      files: z
-        .array(
-          z.object({
-            path: z.string().describe("The path to the file."),
-            sha: z.string().describe("The SHA of the file blob."),
-          })
         )
-        .describe("An array of file objects containing path and sha."),
+        .default("incremental"),
     }),
-    execute: async ({ owner, repo, files, aiPrompt, changeType }) => {
+    execute: async ({ aiPrompt, changeType }) => {
       try {
         const fileContents = await Promise.all(
-          files.map(async (file) => {
+          this.fileDetails.map(async (file) => {
             const originalContent = await this.getFileContent(
-              owner,
-              repo,
+              this.owner,
+              this.repo,
               file.sha
             );
             const activeChange = this.activeChanges?.[file.path];
+
+            console.log("changetype", changeType, this.activeChanges);
 
             const content =
               changeType === "incremental" && activeChange

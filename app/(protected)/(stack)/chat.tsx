@@ -9,15 +9,17 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { fetch as expoFetch } from "expo/fetch";
 
 import { useChanges } from "@/components/ActiveChangesProvider";
+import { useThreadActions } from "@/store/threads";
 import { useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { KeyboardAvoidingView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChatScreen() {
-  const { owner, repo } = useLocalSearchParams<{
+  const { owner, repo, threadId } = useLocalSearchParams<{
     owner: string;
     repo: string;
+    threadId: string;
   }>();
   const [prompt, setPrompt] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -32,7 +34,11 @@ export default function ChatScreen() {
   const { state, setActiveChanges } = useChanges();
   const { activeChanges } = state;
 
+  const { getThread, addMessage } = useThreadActions();
+  const thread = getThread(threadId!);
+
   const { messages, append, isLoading } = useChat({
+    initialMessages: thread?.messages || [],
     api: `${API_URL}/api/suggest-fix`,
     headers: {
       "Content-Type": "application/json",
@@ -49,6 +55,7 @@ export default function ChatScreen() {
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     onFinish(message) {
       console.log("AI response finished:", message);
+      addMessage(threadId!, message);
       const toolInvocations = message.parts?.filter(
         (part) => part.type === "tool-invocation"
       );
@@ -130,7 +137,14 @@ export default function ChatScreen() {
   const handleSend = () => {
     console.log("Sending prompt:", prompt);
 
-    append({ role: "user", content: prompt });
+    const userMessage = {
+      id: `${Date.now()}`,
+      role: "user" as const,
+      content: prompt,
+    };
+
+    addMessage(threadId!, userMessage);
+    append(userMessage);
 
     setPrompt("");
     setSearchQuery(null);
@@ -150,7 +164,7 @@ export default function ChatScreen() {
           messages={messages}
           owner={owner!}
           repo={repo!}
-          base={defaultBranch}
+          base={thread?.branch || defaultBranch}
           installationId={installationId!}
         />
         <ChatInput.Container>

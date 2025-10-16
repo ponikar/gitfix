@@ -5,4 +5,5 @@ export const Storage = {
   INSTALLATION_ID: "INSTALLATION_ID",
   ACTIVE_CHANGES: "ACTIVE_CHANGES",
   PR_LINKS: "PR_LINKS",
+  THREADS: "THREADS",
 } as const;

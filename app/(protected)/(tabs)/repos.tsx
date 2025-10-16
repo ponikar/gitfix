@@ -4,8 +4,9 @@ import {
   useInstallationActions,
   useInstallationState,
 } from "@/store/installation";
+import { useThreadActions } from "@/store/threads";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
 import {
@@ -21,6 +22,8 @@ export default function ReposScreen() {
   const { githubState, accessToken } = useAuthState();
   const { installationId } = useInstallationState();
   const { setInstallationId } = useInstallationActions();
+  const { createThread } = useThreadActions();
+  const router = useRouter();
   const {
     data: repos,
     isLoading,
@@ -69,6 +72,25 @@ export default function ReposScreen() {
     await WebBrowser.openBrowserAsync(url);
   };
 
+  const handleRepoPress = (owner: string, repo: string) => {
+    const newThread = createThread({
+      owner,
+      repo,
+      branch: "main",
+      title: "New conversation",
+      messages: [],
+    });
+
+    router.push({
+      pathname: "/chat",
+      params: {
+        owner,
+        repo,
+        threadId: newThread.id,
+      },
+    });
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -97,23 +119,20 @@ export default function ReposScreen() {
         refreshing={isRefetching}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <Link
-            href={{
-              pathname: "/chat",
-              params: {
-                owner: item.full_name.split("/")[0],
-                repo: item.full_name.split("/")[1],
-              },
-            }}
-            asChild
+          <TouchableOpacity
+            onPress={() =>
+              handleRepoPress(
+                item.full_name.split("/")[0],
+                item.full_name.split("/")[1]
+              )
+            }
+            className="bg-white border-b border-gray-200 flex flex-row items-center gap-2 dark:bg-gray-800 rounded-lg p-3"
           >
-            <TouchableOpacity className="bg-white border-b border-gray-200 flex flex-row items-center gap-2 dark:bg-gray-800 rounded-lg p-3">
-              <AntDesign name="github" size={22} color="black" />
-              <Text className="text-base font-medium text-black dark:text-white">
-                {item.full_name}
-              </Text>
-            </TouchableOpacity>
-          </Link>
+            <AntDesign name="github" size={22} color="black" />
+            <Text className="text-base font-medium text-black dark:text-white">
+              {item.full_name}
+            </Text>
+          </TouchableOpacity>
         )}
       />
     </View>

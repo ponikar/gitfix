@@ -1,0 +1,35 @@
+## Cursor Guidelines
+
+### General Development Rules
+
+- **Start Simple**: Implement simple, efficient solutions first. Avoid overcomplicating.
+- **Avoid Unnecessary Changes**: Only make changes that are necessary for the current task.
+- **Adopt Best Practices**: Follow coding standards and best practices suitable for the language/technology being used.
+
+### GEMINI Specific Rules
+
+- **Comment Sparingly**: Avoid writing excess comments. Write clear code that documents itself.
+- **Simplify Solutions**: Always aim to simplify solutions without compromising functionality.
+- **Adhere to Instructions**: Follow given instructions closely without adding unnecessary features.
+- **State Management**: Use Zustand as the state management library:
+  - Define all stores in the `store` folder.
+  - Each store must follow the specified type structure:
+    ```typescript
+    type State = {
+      state: {
+        // attributes
+      };
+      actions: {
+        // update functions
+      };
+    };
+    // Provide selectors for easy access.
+    // For actions, use `use<StoreName>Action()`.
+    ```
+- **Use MMKV for Storage**:
+  - Use `react-native-mmkv` for default storage.
+  - Create keys in the `Storage` object with clear CAPS names corresponding to each state.
+  - Use type-safe functions for getting and setting keys.
+- **UI Design**: Use TailwindCSS:
+  - Refer to Tailwind color palettes.
+  - Use white for light mode and slate-800 for dark mode card components.

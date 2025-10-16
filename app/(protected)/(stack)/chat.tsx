@@ -8,10 +8,12 @@ import { useChat } from "@ai-sdk/react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { fetch as expoFetch } from "expo/fetch";
 
+import { useChanges } from "@/components/ActiveChangesProvider";
 import { useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { KeyboardAvoidingView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 export default function ChatScreen() {
   const { owner, repo } = useLocalSearchParams<{
     owner: string;
@@ -27,6 +29,7 @@ export default function ChatScreen() {
   >([]);
 
   const { installationId } = useInstallationState();
+  const { changes, setChanges } = useChanges();
 
   const { messages, append, isLoading } = useChat({
     api: `${API_URL}/api/suggest-fix`,
@@ -40,10 +43,42 @@ export default function ChatScreen() {
       repo,
       files: fileRefs,
       userPrompt: prompt,
+      activeChanges: changes.current,
     },
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     onFinish(message) {
       console.log("AI response finished:", message);
+      const toolInvocations = message.parts?.filter(
+        (part) => part.type === "tool-invocation"
+      );
+      if (toolInvocations && toolInvocations.length > 0) {
+        for (const part of toolInvocations) {
+          if (part.type === "tool-invocation") {
+            const toolInvocation = part.toolInvocation;
+            if (
+              toolInvocation.toolName === "downloadFileContent" &&
+              toolInvocation.state === "result"
+            ) {
+              const result = toolInvocation.result as {
+                response: {
+                  type: string;
+                  files?: Array<{ path: string; newContent: string }>;
+                };
+              };
+              if (
+                result.response?.type === "GIT_DIFF" &&
+                result.response.files
+              ) {
+                const activeChanges: { [filePath: string]: string } = {};
+                result.response.files.forEach((file) => {
+                  activeChanges[file.path] = file.newContent;
+                });
+                setChanges(activeChanges);
+              }
+            }
+          }
+        }
+      }
     },
   });
 

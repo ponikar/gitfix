@@ -137,6 +137,7 @@ app.post("/api/suggest-fix", async (c) => {
       userPrompt: body.userPrompt,
       files: body.files ?? [],
       messages: body.messages,
+      activeChanges: body.activeChanges ?? {},
     });
 
     return stream;

@@ -10,6 +10,8 @@ export class Github {
 
   model: Model;
 
+  activeChanges: { [filePath: string]: string } = {};
+
   constructor(installationId: string, env: Bindings) {
     const octokitApp = createOctokitApp(env);
     this.app = octokitApp.getInstallationOctokit(Number(installationId));
@@ -39,6 +41,10 @@ export class Github {
     return decoded;
   }
 
+  protected setActiveChanges(changes: { [filePath: string]: string }) {
+    this.activeChanges = changes;
+  }
+
   getFileContents = tool({
     description:
       "Get the content of multiple files from a GitHub repository. If you have previously modified a file and the user wants to modify it again, provide the content from your last modification in the `previousContent` field for that file.",
@@ -50,29 +56,39 @@ export class Github {
         ),
       owner: z.string().describe("The owner of the repository."),
       repo: z.string().describe("The name of the repository."),
+      changeType: z
+        .enum(["incremental", "new"])
+        .describe(
+          "Determine if the user is asking for incremental changes to previously modified content or new changes from scratch."
+        ),
       files: z
         .array(
           z.object({
             path: z.string().describe("The path to the file."),
             sha: z.string().describe("The SHA of the file blob."),
-            previousFile: z
-              .string()
-              .describe("previous version of file")
-              .optional(),
           })
         )
         .describe("An array of file objects containing path and sha."),
     }),
-    execute: async ({ owner, repo, files, aiPrompt }) => {
+    execute: async ({ owner, repo, files, aiPrompt, changeType }) => {
       try {
         const fileContents = await Promise.all(
           files.map(async (file) => {
-            const content = await this.getFileContent(owner, repo, file.sha);
+            const originalContent = await this.getFileContent(
+              owner,
+              repo,
+              file.sha
+            );
+            const activeChange = this.activeChanges?.[file.path];
+
+            const content =
+              changeType === "incremental" && activeChange
+                ? activeChange
+                : originalContent;
 
             return {
               path: file.path,
               content,
-              previousFile: file.previousFile,
             };
           })
         );
@@ -121,8 +137,6 @@ export class Github {
 
             2.  **Git Diff**: If the user wants to perform a change, refactor, or fix code, provide the original and the proposed new code for the relevant files using the 'GIT_DIFF' schema. You must provide the complete original and new content for each file you are modifying.
 
-            For each file, you are given the original content. For some files, you might also be given 'PREVIOUSLY_MODIFIED_CONTENT'. This is the content you generated in a previous turn. Based on the user query, you must decide whether to apply changes to the original content or to the previously modified content. If you use the previously modified content, that becomes the 'originalContent' for the diff you generate.
-
             Analyze the user's query and the file content carefully to make the right choice.
 
             User Query: ${aiPrompt}
@@ -134,11 +148,7 @@ export class Github {
                 Here is the content of the files:
                 ${fileContents
                   .map((f) => {
-                    let fileInfo = `File: ${f.path}\n\nORIGINAL_CONTENT:\n\n\`\`\`\n${f.content}\n\`\`\``;
-                    if (f.previousFile) {
-                      fileInfo += `\n\nPREVIOUSLY_MODIFIED_CONTENT:\n\n\`\`\`\n${f.previousFile}\n\`\`\``;
-                    }
-                    return fileInfo;
+                    return `File: ${f.path}\n\n\`\`\`\n${f.content}\n\`\`\``;
                   })
                   .join("\n\n")}
               `,

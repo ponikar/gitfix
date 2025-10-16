@@ -1,14 +1,24 @@
 import React, { createContext, ReactNode, useContext, useRef } from "react";
+import { getItem, setItem } from "../storage";
+import { Storage } from "../storage/keys"; // Import Storage correctly
 
 interface FileChanges {
   [filePath: string]: string;
 }
 
-interface ChangesContextType {
-  changes: { current: FileChanges };
-  setChanges: (changes: FileChanges) => void;
-  clearChanges: () => void;
+interface State {
+  activeChanges: FileChanges;
 }
+
+interface ChangesContextType {
+  state: State;
+  setActiveChanges: (changes: FileChanges) => void;
+  clearActiveChanges: () => void;
+}
+
+const initialState: State = {
+  activeChanges: {},
+};
 
 const ChangesContext = createContext<ChangesContextType | undefined>(undefined);
 
@@ -17,18 +27,24 @@ interface ChangesProviderProps {
 }
 
 export function ChangesProvider({ children }: ChangesProviderProps) {
-  const changes = useRef<FileChanges>({});
+  const state = useRef<State>({
+    activeChanges: JSON.parse(getItem(Storage.ACTIVE_CHANGES) || "{}"),
+  });
 
-  const setChanges = (newChanges: FileChanges) => {
-    changes.current = newChanges;
+  const setActiveChanges = (newChanges: FileChanges) => {
+    state.current.activeChanges = newChanges;
+    setItem(Storage.ACTIVE_CHANGES, JSON.stringify(newChanges));
   };
 
-  const clearChanges = () => {
-    changes.current = {};
+  const clearActiveChanges = () => {
+    state.current.activeChanges = {};
+    setItem(Storage.ACTIVE_CHANGES, null);
   };
 
   return (
-    <ChangesContext.Provider value={{ changes, setChanges, clearChanges }}>
+    <ChangesContext.Provider
+      value={{ state: state.current, setActiveChanges, clearActiveChanges }}
+    >
       {children}
     </ChangesContext.Provider>
   );

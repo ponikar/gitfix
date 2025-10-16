@@ -3,4 +3,5 @@ export const Storage = {
   GITHUB_STATE: "GITHUB_STATE",
   CODE: "CODE",
   INSTALLATION_ID: "INSTALLATION_ID",
+  ACTIVE_CHANGES: "ACTIVE_CHANGES",
 } as const;

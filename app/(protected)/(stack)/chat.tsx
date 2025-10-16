@@ -29,7 +29,8 @@ export default function ChatScreen() {
   >([]);
 
   const { installationId } = useInstallationState();
-  const { changes, setChanges } = useChanges();
+  const { state, setActiveChanges } = useChanges();
+  const { activeChanges } = state;
 
   const { messages, append, isLoading } = useChat({
     api: `${API_URL}/api/suggest-fix`,
@@ -43,7 +44,7 @@ export default function ChatScreen() {
       repo,
       files: fileRefs,
       userPrompt: prompt,
-      activeChanges: changes.current,
+      activeChanges: activeChanges,
     },
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     onFinish(message) {
@@ -73,7 +74,7 @@ export default function ChatScreen() {
                 result.response.files.forEach((file) => {
                   activeChanges[file.path] = file.newContent;
                 });
-                setChanges(activeChanges);
+                setActiveChanges(activeChanges);
               }
             }
           }

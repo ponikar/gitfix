@@ -8,16 +8,19 @@ interface FileChanges {
 
 interface State {
   activeChanges: FileChanges;
+  prLinks: Map<string, string>;
 }
 
 interface ChangesContextType {
   state: State;
   setActiveChanges: (changes: FileChanges) => void;
   clearActiveChanges: () => void;
+  setPrLink: (messageId: string, prLink: string) => void;
 }
 
 const initialState: State = {
   activeChanges: {},
+  prLinks: new Map<string, string>(),
 };
 
 const ChangesContext = createContext<ChangesContextType | undefined>(undefined);
@@ -29,6 +32,7 @@ interface ChangesProviderProps {
 export function ChangesProvider({ children }: ChangesProviderProps) {
   const state = useRef<State>({
     activeChanges: JSON.parse(getItem(Storage.ACTIVE_CHANGES) || "{}"),
+    prLinks: new Map<string, string>(),
   });
 
   const setActiveChanges = (newChanges: FileChanges) => {
@@ -41,9 +45,19 @@ export function ChangesProvider({ children }: ChangesProviderProps) {
     setItem(Storage.ACTIVE_CHANGES, null);
   };
 
+  function setPrLink(messageId: string, prLink: string) {
+    const currentLinks = state.current.prLinks;
+    currentLinks.set(messageId, prLink);
+  }
+
   return (
     <ChangesContext.Provider
-      value={{ state: state.current, setActiveChanges, clearActiveChanges }}
+      value={{
+        state: state.current,
+        setActiveChanges,
+        clearActiveChanges,
+        setPrLink,
+      }}
     >
       {children}
     </ChangesContext.Provider>

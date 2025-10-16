@@ -3,6 +3,7 @@ import { type Message } from "@ai-sdk/react";
 import { ToolInvocation } from "@ai-sdk/ui-utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { structuredPatch } from "diff";
+import { useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -11,6 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useChanges } from "../components/ActiveChangesProvider";
 
 export interface SimpleChatProps {
   messages: Message[];
@@ -107,7 +109,17 @@ const ToolInvocationContent = ({
   installationId: number;
   messages: Message[];
 }) => {
+  const { state: changesState, setPrLink } = useChanges();
   const { mutate: raisePR, isPending, isSuccess, data } = useRaisePR();
+
+  useEffect(() => {
+    if (data && data.pullRequestUrl) {
+      setPrLink(toolInvocation.toolCallId, data.pullRequestUrl);
+    }
+  }, [data, toolInvocation.toolCallId, setPrLink]);
+
+  const existingPrLink = changesState.prLinks.get(toolInvocation.toolCallId);
+  const prExists = (data && data.pullRequestUrl) || existingPrLink;
 
   if (toolInvocation.toolName === "downloadFileContent") {
     if (toolInvocation.state === "result") {
@@ -189,11 +201,10 @@ const ToolInvocationContent = ({
                   newContent={file.newContent}
                 />
               ))}
-              {isSuccess && data ? (
+              {prExists ? (
                 <View className="mt-4 flex items-center gap-4 flex-row">
                   <Pressable
-                    onPress={() => redirectToGithub(data.pullRequestUrl)}
-                    disabled={isPending}
+                    onPress={() => redirectToGithub(prExists)}
                     className="bg-white flex flex-row gap-2 items-center rounded-md p-2"
                   >
                     <AntDesign name="github" size={20} color="black" />

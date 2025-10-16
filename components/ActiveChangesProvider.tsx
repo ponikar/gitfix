@@ -30,9 +30,10 @@ interface ChangesProviderProps {
 }
 
 export function ChangesProvider({ children }: ChangesProviderProps) {
+  const prLinksData = getItem(Storage.PR_LINKS);
   const state = useRef<State>({
     activeChanges: JSON.parse(getItem(Storage.ACTIVE_CHANGES) || "{}"),
-    prLinks: new Map<string, string>(),
+    prLinks: new Map(JSON.parse(prLinksData || "[]")),
   });
 
   const setActiveChanges = (newChanges: FileChanges) => {
@@ -46,8 +47,11 @@ export function ChangesProvider({ children }: ChangesProviderProps) {
   };
 
   function setPrLink(messageId: string, prLink: string) {
-    const currentLinks = state.current.prLinks;
-    currentLinks.set(messageId, prLink);
+    state.current.prLinks.set(messageId, prLink);
+    setItem(
+      Storage.PR_LINKS,
+      JSON.stringify(Array.from(state.current.prLinks.entries()))
+    );
   }
 
   return (

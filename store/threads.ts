@@ -7,7 +7,6 @@ export type Thread = {
   id: string;
   owner: string;
   repo: string;
-  branch: string;
   title: string;
   messages: Message[];
   createdAt: number;

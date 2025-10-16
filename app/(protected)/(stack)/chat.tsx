@@ -4,7 +4,7 @@ import { useBranches } from "@/lib/useBranches";
 import { useChatThread } from "@/lib/useChatThread";
 import { useInstallationState } from "@/store/installation";
 import { useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { KeyboardAvoidingView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -30,13 +30,25 @@ export default function ChatScreen() {
     installationId,
   });
 
-  const defaultBranch = useMemo(() => {
-    if (!branches) return "main";
+  const [branch, setBranch] = useState<string>("main");
+
+  console.log("branch", branch);
+
+  useEffect(() => {
+    if (!branches) return;
     const mainBranch = branches.find((b) => b.name === "main");
-    if (mainBranch) return mainBranch.name;
+    if (mainBranch) {
+      setBranch(mainBranch.name);
+      return;
+    }
     const masterBranch = branches.find((b) => b.name === "master");
-    if (masterBranch) return masterBranch.name;
-    return branches[0]?.name ?? "main";
+    if (masterBranch) {
+      setBranch(masterBranch.name);
+      return;
+    }
+    if (branches[0]?.name) {
+      setBranch(branches[0].name);
+    }
   }, [branches]);
 
   const handleSend = useCallback(
@@ -45,6 +57,10 @@ export default function ChatScreen() {
     },
     [sendMessage]
   );
+
+  const handleBranchChange = useCallback((newBranch: string) => {
+    setBranch(newBranch);
+  }, []);
 
   return (
     <SafeAreaView edges={["bottom"]} style={{ flex: 1 }}>
@@ -57,14 +73,15 @@ export default function ChatScreen() {
           messages={messages}
           owner={owner!}
           repo={repo!}
-          base={thread?.branch || defaultBranch}
+          base={branch}
           installationId={installationId!}
         />
         <ChatInputSection
           owner={owner!}
           repo={repo!}
-          branch={thread?.branch || defaultBranch}
+          branch={branch}
           onSend={handleSend}
+          onBranchChange={handleBranchChange}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

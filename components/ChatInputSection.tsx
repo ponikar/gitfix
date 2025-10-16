@@ -1,3 +1,4 @@
+import { BranchPicker } from "@/components/BranchPicker";
 import { ChatInput } from "@/components/ChatInput";
 import { FileList } from "@/components/FileList";
 import { useFileRefsActions, useFileRefsState } from "@/store/fileRefs";
@@ -10,6 +11,7 @@ interface ChatInputSectionProps {
   repo: string;
   branch: string;
   onSend: (message: string) => void;
+  onBranchChange: (branch: string) => void;
 }
 
 export const ChatInputSection = memo(function ChatInputSection({
@@ -17,6 +19,7 @@ export const ChatInputSection = memo(function ChatInputSection({
   repo,
   branch,
   onSend,
+  onBranchChange,
 }: ChatInputSectionProps) {
   const [prompt, setPrompt] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -79,7 +82,12 @@ export const ChatInputSection = memo(function ChatInputSection({
           <AntDesign name="arrow-up" size={16} color="white" />
         </ChatInput.Button>
       </View>
-      <ChatInput.BranchPicker owner={owner} repo={repo} />
+      <BranchPicker
+        owner={owner}
+        repo={repo}
+        branch={branch}
+        onBranchChange={onBranchChange}
+      />
     </ChatInput.Container>
   );
 });

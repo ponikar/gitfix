@@ -82,14 +82,19 @@ app.get("/api/repos/:owner/:repo/branches", async (c) => {
 });
 
 // tree information of that particular repo
-app.get("/api/repos/:owner/:repo/tree/:branch", async (c) => {
+app.post("/api/repos/:owner/:repo/tree", async (c) => {
   try {
-    const { owner, repo, branch } = c.req.param();
-    const installationId = Number(c.req.query("installationId"));
+    const { owner, repo } = c.req.param();
+    const body = await c.req.json();
+    const { branch, installationId } = body;
     const octokitApp = createOctokitApp(c.env);
 
     if (!installationId) {
       return c.json({ error: "Invalid installationId" }, 400);
+    }
+
+    if (!branch) {
+      return c.json({ error: "Branch is required" }, 400);
     }
 
     const octokit = await octokitApp.getInstallationOctokit(installationId);

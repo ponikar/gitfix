@@ -3,17 +3,23 @@ import { useInstallationState } from "@/store/installation";
 import { ContextMenu, Host, Picker } from "@expo/ui/swift-ui";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { ActivityIndicator, Pressable, Text } from "react-native";
 
 type BranchPickerProps = {
   owner: string;
   repo: string;
+  branch: string;
+  onBranchChange: (branch: string) => void;
 };
 
-export function BranchPicker({ owner, repo }: BranchPickerProps) {
+export function BranchPicker({
+  owner,
+  repo,
+  branch,
+  onBranchChange,
+}: BranchPickerProps) {
   const { installationId } = useInstallationState();
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
 
   const {
     data: branches,
@@ -26,15 +32,6 @@ export function BranchPicker({ owner, repo }: BranchPickerProps) {
     installationId,
   });
 
-  const defaultBranch = useMemo(() => {
-    if (!branches) return null;
-    const mainBranch = branches.find((branch) => branch.name === "main");
-    if (mainBranch) return mainBranch.name;
-    const masterBranch = branches.find((branch) => branch.name === "master");
-    if (masterBranch) return masterBranch.name;
-    return branches[0]?.name ?? null;
-  }, [branches]);
-
   if (isLoading) {
     return <ActivityIndicator />;
   }
@@ -43,14 +40,8 @@ export function BranchPicker({ owner, repo }: BranchPickerProps) {
     return <Text>Error: {error?.message}</Text>;
   }
 
-  const branchNames = branches?.map((branch) => branch.name) ?? [];
-  const selectedIndex = selectedBranch
-    ? branchNames.indexOf(selectedBranch)
-    : defaultBranch
-      ? branchNames.indexOf(defaultBranch)
-      : 0;
-
-  const currentBranch = selectedBranch ?? defaultBranch;
+  const branchNames = branches?.map((b) => b.name) ?? [];
+  const selectedIndex = branchNames.indexOf(branch);
 
   return (
     <Host>
@@ -62,7 +53,7 @@ export function BranchPicker({ owner, repo }: BranchPickerProps) {
             variant="menu"
             selectedIndex={selectedIndex}
             onOptionSelected={({ nativeEvent: { index } }) => {
-              setSelectedBranch(branchNames[index]);
+              onBranchChange(branchNames[index]);
             }}
           />
         </ContextMenu.Items>
@@ -73,7 +64,7 @@ export function BranchPicker({ owner, repo }: BranchPickerProps) {
               size={18}
               color="black"
             />
-            <Text className="font-bold text-base"> {currentBranch}</Text>
+            <Text className="font-bold text-base"> {branch}</Text>
             <Entypo name="chevron-down" size={18} color="black" />
           </Pressable>
         </ContextMenu.Trigger>

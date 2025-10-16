@@ -20,6 +20,8 @@ type ChatInputButtonProps = {
 type BranchPickerProps = {
   owner: string;
   repo: string;
+  branch: string;
+  onBranchChange: (branch: string) => void;
 };
 
 const ChatInputContainer = ({ children }: ChatInputContainerProps) => {
@@ -55,8 +57,20 @@ const ChatInputButton = ({ onPress, children }: ChatInputButtonProps) => {
   );
 };
 
-const BranchPicker = ({ owner, repo }: BranchPickerProps) => {
-  return <BranchPickerComponent owner={owner} repo={repo} />;
+const BranchPicker: React.FC<BranchPickerProps> = ({
+  owner,
+  repo,
+  branch,
+  onBranchChange,
+}) => {
+  return (
+    <BranchPickerComponent
+      owner={owner}
+      repo={repo}
+      branch={branch}
+      onBranchChange={onBranchChange}
+    />
+  );
 };
 
 export const ChatInput = {

@@ -94,6 +94,115 @@ export const DiffView = ({
   );
 };
 
+type ToolResult =
+  | {
+      fileContents: { path: string; content: string }[];
+      response:
+        | {
+            type: "TEXT_RESPONSE";
+            response: string;
+          }
+        | {
+            type: "GIT_DIFF";
+            files: {
+              path: string;
+              originalContent: string;
+              newContent: string;
+            }[];
+          };
+    }
+  | {
+      error: string;
+    };
+
+const ReadingFilesList = ({
+  files,
+  toolCallId,
+}: {
+  files: { path: string; content: string }[];
+  toolCallId: string;
+}) => {
+  if (!Array.isArray(files) || files.length === 0) return null;
+
+  return (
+    <View className="gap-y-1">
+      <View className="flex-row items-center">
+        <Text className="text-black mb-2 font-bold dark:text-white">
+          Reading file{files.length > 1 ? "s" : ""}
+        </Text>
+      </View>
+      {files.map((file, index) => (
+        <Text key={`${toolCallId}-${index}`} className="font-medium">
+          📄 {file.path}
+        </Text>
+      ))}
+    </View>
+  );
+};
+
+const TextResponse = ({ text }: { text: string }) => (
+  <Text className="text-base text-left font-medium mt-2">{text}</Text>
+);
+
+const GitDiffResponse = ({
+  files,
+  prExists,
+  isPending,
+  onRaisePR,
+  onViewOnGithub,
+}: {
+  files: {
+    path: string;
+    originalContent: string;
+    newContent: string;
+  }[];
+  prExists: string | undefined;
+  isPending: boolean;
+  onRaisePR: () => void;
+  onViewOnGithub: (url: string) => void;
+}) => (
+  <View className="mt-2">
+    <Text className="text-base text-left font-medium">Proposed changes:</Text>
+    {files.map((file, index) => (
+      <DiffView
+        key={index}
+        path={file.path}
+        originalContent={file.originalContent}
+        newContent={file.newContent}
+      />
+    ))}
+    {prExists ? (
+      <View className="mt-4 flex items-center gap-4 flex-row">
+        <Pressable
+          onPress={() => onViewOnGithub(prExists)}
+          className="bg-white flex flex-row gap-2 items-center rounded-md p-2"
+        >
+          <AntDesign name="github" size={20} color="black" />
+          <Text className="text-black font-bold">View on Github</Text>
+        </Pressable>
+      </View>
+    ) : (
+      <Pressable
+        onPress={onRaisePR}
+        disabled={isPending}
+        className="bg-blue-500 rounded-md p-2 mt-4 self-start"
+      >
+        {isPending ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text className="text-white font-bold">Raise PR</Text>
+        )}
+      </Pressable>
+    )}
+  </View>
+);
+
+const ErrorMessage = ({ error }: { error: string }) => (
+  <View className="bg-red-100 dark:bg-red-900 p-2 rounded-md">
+    <Text className="text-red-800 dark:text-red-200 font-medium">{error}</Text>
+  </View>
+);
+
 const ToolInvocationContent = ({
   toolInvocation,
   owner,
@@ -110,137 +219,83 @@ const ToolInvocationContent = ({
   messages: Message[];
 }) => {
   const { state: changesState, setPrLink } = useChanges();
-  const { mutate: raisePR, isPending, isSuccess, data } = useRaisePR();
+  const { mutate: raisePR, isPending, data } = useRaisePR();
 
   useEffect(() => {
-    if (data && data.pullRequestUrl) {
+    if (data?.pullRequestUrl) {
       setPrLink(toolInvocation.toolCallId, data.pullRequestUrl);
     }
   }, [data, toolInvocation.toolCallId, setPrLink]);
 
-  const existingPrLink = changesState.prLinks.get(toolInvocation.toolCallId);
-  const prExists = (data && data.pullRequestUrl) || existingPrLink;
-
-  if (toolInvocation.toolName === "downloadFileContent") {
-    if (toolInvocation.state === "result") {
-      try {
-        const { fileContents, response } = toolInvocation.result as {
-          fileContents: { path: string; content: string }[];
-          response:
-            | {
-                type: "TEXT_RESPONSE";
-                response: string;
-              }
-            | {
-                type: "GIT_DIFF";
-                files: {
-                  path: string;
-                  originalContent: string;
-                  newContent: string;
-                }[];
-              };
-        };
-
-        const handleRaisePR = () => {
-          if (response.type !== "GIT_DIFF") return;
-
-          const head = `gitfix/patch-${Date.now()}`;
-          const files = response.files.map((f) => ({
-            path: f.path,
-            content: f.newContent,
-          }));
-
-          raisePR({
-            owner,
-            repo,
-            base,
-            head,
-            files,
-            installationId,
-            messages,
-          });
-        };
-
-        const redirectToGithub = (url: string) => {
-          Linking.openURL(url);
-        };
-
-        const readingFilesView = (
-          <View className="gap-y-1">
-            {fileContents.map((result, resultIndex) => (
-              <View key={`${toolInvocation.toolCallId}-${resultIndex}`}>
-                <View className="flex-row items-center">
-                  <Text className="text-black mb-2 font-bold dark:text-white">
-                    Reading file{fileContents.length > 1 ? "s" : ""}{" "}
-                  </Text>
-                </View>
-                <Text className="font-medium">📄 {result.path}</Text>
-              </View>
-            ))}
-          </View>
-        );
-
-        let responseContent = null;
-        if (response.type === "TEXT_RESPONSE") {
-          responseContent = (
-            <Text className="text-base text-left font-medium mt-2">
-              {response.response}
-            </Text>
-          );
-        } else if (response.type === "GIT_DIFF") {
-          responseContent = (
-            <View className="mt-2">
-              <Text className="text-base text-left font-medium">
-                Proposed changes:
-              </Text>
-              {response.files.map((file, index) => (
-                <DiffView
-                  key={index}
-                  path={file.path}
-                  originalContent={file.originalContent}
-                  newContent={file.newContent}
-                />
-              ))}
-              {prExists ? (
-                <View className="mt-4 flex items-center gap-4 flex-row">
-                  <Pressable
-                    onPress={() => redirectToGithub(prExists)}
-                    className="bg-white flex flex-row gap-2 items-center rounded-md p-2"
-                  >
-                    <AntDesign name="github" size={20} color="black" />
-                    <Text className="text-black font-bold">View on Github</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={handleRaisePR}
-                  disabled={isPending}
-                  className="bg-blue-500 rounded-md p-2 mt-4 self-start"
-                >
-                  {isPending ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <Text className="text-white font-bold">Raise PR</Text>
-                  )}
-                </Pressable>
-              )}
-            </View>
-          );
-        }
-
-        return (
-          <View>
-            {readingFilesView}
-            {responseContent}
-          </View>
-        );
-      } catch (e) {
-        console.error("Error parsing tool result", e);
-        return null;
-      }
-    }
+  if (
+    toolInvocation.toolName !== "downloadFileContent" ||
+    toolInvocation.state !== "result"
+  ) {
+    return null;
   }
-  return null;
+
+  const existingPrLink = changesState.prLinks.get(toolInvocation.toolCallId);
+  const prExists = data?.pullRequestUrl || existingPrLink;
+
+  try {
+    const toolResult = toolInvocation.result as ToolResult;
+
+    if ("error" in toolResult) {
+      return <ErrorMessage error={toolResult.error} />;
+    }
+
+    const { fileContents, response } = toolResult;
+
+    const handleRaisePR = () => {
+      if (response.type !== "GIT_DIFF") return;
+
+      const head = `gitfix/patch-${Date.now()}`;
+      const files = response.files.map((f) => ({
+        path: f.path,
+        content: f.newContent,
+      }));
+
+      raisePR({
+        owner,
+        repo,
+        base,
+        head,
+        files,
+        installationId,
+        messages,
+      });
+    };
+
+    const handleViewOnGithub = (url: string) => {
+      Linking.openURL(url);
+    };
+
+    return (
+      <View>
+        <ReadingFilesList
+          files={fileContents}
+          toolCallId={toolInvocation.toolCallId}
+        />
+        {response.type === "TEXT_RESPONSE" && (
+          <TextResponse text={response.response} />
+        )}
+        {response.type === "GIT_DIFF" && (
+          <GitDiffResponse
+            files={response.files}
+            prExists={prExists}
+            isPending={isPending}
+            onRaisePR={handleRaisePR}
+            onViewOnGithub={handleViewOnGithub}
+          />
+        )}
+      </View>
+    );
+  } catch (error) {
+    console.error("Error parsing tool result:", error);
+    return (
+      <ErrorMessage error="Failed to parse tool result. Please try again." />
+    );
+  }
 };
 
 export function SimpleChat({

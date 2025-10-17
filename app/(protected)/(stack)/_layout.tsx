@@ -7,10 +7,18 @@ export default function StackLayout() {
       <Stack>
         <Stack.Screen
           name="chat"
-          options={{
-            title: "Chat",
-            headerBackVisible: true,
-            headerBackTitle: "Back",
+          options={({ route }) => {
+            const params = route.params as
+              | { owner?: string; repo?: string }
+              | undefined;
+            return {
+              title:
+                params?.owner && params?.repo
+                  ? `${params.owner}/${params.repo}`
+                  : "Chat",
+              headerBackVisible: true,
+              headerBackTitle: "Back",
+            };
           }}
         />
       </Stack>

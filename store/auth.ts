@@ -50,6 +50,11 @@ const useAuthStore = create<{ state: AuthState; actions: AuthActions }>()(
         removeItem(Storage.ACCESS_TOKEN);
         removeItem(Storage.GITHUB_STATE);
         removeItem(Storage.CODE);
+        removeItem(Storage.INSTALLATION_ID);
+        removeItem(Storage.ACTIVE_CHANGES);
+        removeItem(Storage.PR_LINKS);
+        removeItem(Storage.THREADS);
+        removeItem(Storage.FILE_REFS);
         set({ state: { accessToken: null, githubState: null, code: null } });
       },
     },

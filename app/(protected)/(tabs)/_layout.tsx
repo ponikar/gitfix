@@ -29,6 +29,14 @@ export default function TabLayout() {
           drawerLabel: "Conversations",
         }}
       />
+
+      <Drawer.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          drawerLabel: "Settings",
+        }}
+      />
     </Drawer>
   );
 }

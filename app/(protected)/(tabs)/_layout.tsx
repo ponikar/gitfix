@@ -1,63 +1,34 @@
-import { Tabs } from "expo-router";
-
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import Octicons from "@expo/vector-icons/Octicons";
-
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof Octicons>["name"];
-  color: string;
-  focused: boolean;
-}) {
-  return (
-    <Octicons
-      name={props.name}
-      size={24}
-      color={!props.focused ? "#6b7280" : "#111827"}
-    />
-  );
-}
-
-function ThreadIcon(props: { color: string; focused: boolean }) {
-  return (
-    <MaterialCommunityIcons
-      name="message-text-outline"
-      size={24}
-      color={!props.focused ? "#6b7280" : "#111827"}
-    />
-  );
-}
+import EV from "@expo/vector-icons/EvilIcons";
+import { Drawer } from "expo-router/drawer";
+import { Pressable } from "react-native";
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
+    <Drawer
+      screenOptions={({ navigation }) => ({
         headerShown: true,
-      }}
+        drawerActiveTintColor: "#0f172a",
+        headerLeft: (p) => (
+          <Pressable onPress={navigation.toggleDrawer} className="p-2">
+            <EV name="navicon" size={26} />
+          </Pressable>
+        ),
+      })}
     >
-      <Tabs.Screen
+      <Drawer.Screen
         name="repos"
         options={{
           title: "Repos",
-          tabBarLabelStyle: {
-            display: "none",
-          },
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon focused={focused} name="feed-repo" color={color} />
-          ),
+          drawerLabel: "Repositories",
         }}
       />
-      <Tabs.Screen
+      <Drawer.Screen
         name="threads"
         options={{
           title: "Threads",
-          tabBarLabelStyle: {
-            display: "none",
-          },
-          tabBarIcon: ({ color, focused }) => (
-            <ThreadIcon focused={focused} color={color} />
-          ),
+          drawerLabel: "Conversations",
         }}
       />
-    </Tabs>
+    </Drawer>
   );
 }

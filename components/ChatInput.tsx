@@ -26,7 +26,7 @@ type BranchPickerProps = {
 
 const ChatInputContainer = ({ children }: ChatInputContainerProps) => {
   return (
-    <View className="m-3 bg-white border border-gray-200 rounded-2xl dark:bg-slate-800 gap-2 p-2.5">
+    <View className="m-3 border overflow-hidden border-gray-200 rounded-2xl gap-2 p-2.5">
       {children}
     </View>
   );

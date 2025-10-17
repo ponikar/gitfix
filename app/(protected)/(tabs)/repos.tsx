@@ -1,3 +1,4 @@
+import { Button, ButtonIcon, ButtonText } from "@/components/Button";
 import { useRepos } from "@/lib/useRepos";
 import { useAuthState } from "@/store/auth";
 import {
@@ -11,7 +12,6 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
 import {
   ActivityIndicator,
-  Button,
   FlatList,
   Text,
   TouchableOpacity,
@@ -76,7 +76,6 @@ export default function ReposScreen() {
     const newThread = createThread({
       owner,
       repo,
-      branch: "main",
       title: "New conversation",
       messages: [],
     });
@@ -111,13 +110,23 @@ export default function ReposScreen() {
 
   return (
     <View className="flex-1 dark:bg-gray-900 bg-white">
-      <Button title="Configure Github Repo" onPress={handleConfigureRepo} />
-
       <FlatList
         data={repos}
         onRefresh={refetch}
+        ListHeaderComponentClassName="mt-2"
+        ListHeaderComponent={
+          <View className="px-4 mt-auto">
+            <Button size="md" variant="ghost" onPress={handleConfigureRepo}>
+              <ButtonIcon>
+                <AntDesign name="github" color="black" />
+              </ButtonIcon>
+              <ButtonText>Configure Github Repo</ButtonText>
+            </Button>
+          </View>
+        }
         refreshing={isRefetching}
         keyExtractor={(item) => item.id.toString()}
+        contentContainerClassName="h-full "
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() =>
@@ -126,9 +135,9 @@ export default function ReposScreen() {
                 item.full_name.split("/")[1]
               )
             }
-            className="bg-white border-b border-gray-200 flex flex-row items-center gap-2 dark:bg-gray-800 rounded-lg p-3"
+            className="bg-white border-b border-gray-200 flex flex-row items-center gap-2 dark:bg-gray-800 rounded-lg p-3.5"
           >
-            <AntDesign name="github" size={22} color="black" />
+            {/* <AntDesign name="folder-open" size={22} color="black" /> */}
             <Text className="text-base font-medium text-black dark:text-white">
               {item.full_name}
             </Text>

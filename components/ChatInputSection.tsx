@@ -3,6 +3,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { FileList } from "@/components/FileList";
 import { useFileRefsActions, useFileRefsState } from "@/store/fileRefs";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { GlassView } from "expo-glass-effect";
 import React, { memo, useState } from "react";
 import { View } from "react-native";
 
@@ -12,6 +13,8 @@ interface ChatInputSectionProps {
   branch: string;
   onSend: (message: string) => void;
   onBranchChange: (branch: string) => void;
+
+  initialConvo: boolean;
 }
 
 export const ChatInputSection = memo(function ChatInputSection({
@@ -20,6 +23,7 @@ export const ChatInputSection = memo(function ChatInputSection({
   branch,
   onSend,
   onBranchChange,
+  initialConvo = false,
 }: ChatInputSectionProps) {
   const [prompt, setPrompt] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
@@ -63,6 +67,15 @@ export const ChatInputSection = memo(function ChatInputSection({
 
   return (
     <ChatInput.Container>
+      <GlassView
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          top: 0,
+        }}
+      />
       {searchQuery !== null && (
         <FileList
           owner={owner}
@@ -72,22 +85,27 @@ export const ChatInputSection = memo(function ChatInputSection({
           onFileSelect={handleFileSelect}
         />
       )}
-      <View className="flex flex-row items-start">
+
+      <View className="flex overflow-hidden flex-row items-start">
         <ChatInput.Input
           placeholder="Type @ to mention a file..."
           value={prompt}
           onChangeText={handleTextChange}
         />
+
         <ChatInput.Button onPress={handleSend}>
           <AntDesign name="arrow-up" size={16} color="white" />
         </ChatInput.Button>
       </View>
-      <BranchPicker
-        owner={owner}
-        repo={repo}
-        branch={branch}
-        onBranchChange={onBranchChange}
-      />
+
+      {initialConvo && (
+        <BranchPicker
+          owner={owner}
+          repo={repo}
+          branch={branch}
+          onBranchChange={onBranchChange}
+        />
+      )}
     </ChatInput.Container>
   );
 });

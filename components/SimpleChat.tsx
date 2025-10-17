@@ -4,15 +4,9 @@ import { ToolInvocation } from "@ai-sdk/ui-utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { structuredPatch } from "diff";
 import { useEffect } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Linking,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { FlatList, Linking, Text, View } from "react-native";
 import { useChanges } from "../components/ActiveChangesProvider";
+import { Button, ButtonIcon, ButtonText } from "./Button";
 
 export interface SimpleChatProps {
   messages: Message[];
@@ -172,35 +166,37 @@ const GitDiffResponse = ({
       />
     ))}
     {prExists ? (
-      <View className="mt-4 flex items-center gap-4 flex-row">
-        <Pressable
+      <View className="mt-4 ml-auto flex items-center gap-4 flex-row">
+        <Button
+          variant="secondary"
+          size="md"
           onPress={() => onViewOnGithub(prExists)}
-          className="bg-white flex flex-row gap-2 items-center rounded-md p-2"
         >
-          <AntDesign name="github" size={20} color="black" />
-          <Text className="text-black font-bold">View on Github</Text>
-        </Pressable>
+          <ButtonIcon>
+            <AntDesign name="github" size={20} color="black" />
+          </ButtonIcon>
+          <ButtonText>View on Github</ButtonText>
+        </Button>
       </View>
     ) : (
-      <Pressable
+      <Button
+        variant="primary"
+        size="md"
+        isLoading={isPending}
         onPress={onRaisePR}
-        disabled={isPending}
-        className="bg-blue-500 rounded-md p-2 mt-4 self-start"
+        className="mt-4"
       >
-        {isPending ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text className="text-white font-bold">Raise PR</Text>
-        )}
-      </Pressable>
+        <ButtonIcon>
+          <AntDesign name="pull-request" color="white" />
+        </ButtonIcon>
+        {!isPending && <ButtonText>Raise PR</ButtonText>}
+      </Button>
     )}
   </View>
 );
 
 const ErrorMessage = ({ error }: { error: string }) => (
-  <View className="bg-red-100 dark:bg-red-900 p-2 rounded-md">
-    <Text className="text-red-800 dark:text-red-200 font-medium">{error}</Text>
-  </View>
+  <Text className="text-black">{error}</Text>
 );
 
 const ToolInvocationContent = ({
@@ -317,17 +313,17 @@ export function SimpleChat({
 
     return (
       <View
-        className={`p-3 rounded-lg my-1 max-w-[80%] ${
+        className={`p-3 rounded-2xl my-2 ${
           isUser
-            ? "bg-blue-500 self-end"
-            : "bg-gray-200 dark:bg-slate-800 self-start"
+            ? "bg-slate-800 self-end max-w-[80%]"
+            : "border bg-white border-gray-200 dark:bg-slate-800 self-start"
         }`}
       >
         {item.content ? (
           <Text
             className={isUser ? "text-white" : "text-black dark:text-white"}
           >
-            {item.content}
+            {item.content?.trim()}
           </Text>
         ) : null}
         {toolInvocations && toolInvocations.length > 0 ? (

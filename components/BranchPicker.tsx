@@ -1,6 +1,6 @@
 import { useBranches } from "@/lib/useBranches";
 import { useInstallationState } from "@/store/installation";
-import { ContextMenu, Host, Picker } from "@expo/ui/swift-ui";
+import { Button, ContextMenu, Host } from "@expo/ui/swift-ui";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
@@ -47,15 +47,15 @@ export function BranchPicker({
     <Host>
       <ContextMenu>
         <ContextMenu.Items>
-          <Picker
-            label="Branches"
-            options={branchNames}
-            variant="menu"
-            selectedIndex={selectedIndex}
-            onOptionSelected={({ nativeEvent: { index } }) => {
-              onBranchChange(branchNames[index]);
-            }}
-          />
+          {branchNames.map((b, index) => (
+            <Button
+              variant="glass"
+              systemImage={branch === b ? "checkmark" : undefined}
+              onPress={() => onBranchChange(branchNames[index])}
+            >
+              {b}
+            </Button>
+          ))}
         </ContextMenu.Items>
         <ContextMenu.Trigger>
           <Pressable className="ml-auto flex flex-row items-center gap-1 px-1">

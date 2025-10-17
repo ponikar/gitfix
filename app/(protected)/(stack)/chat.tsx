@@ -63,10 +63,13 @@ export default function ChatScreen() {
   }, []);
 
   return (
-    <SafeAreaView edges={["bottom"]} style={{ flex: 1 }}>
+    <SafeAreaView
+      edges={["bottom"]}
+      style={{ flex: 1, backgroundColor: "#fff" }}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        keyboardVerticalOffset={60}
+        keyboardVerticalOffset={120}
         behavior="height"
       >
         <SimpleChat
@@ -78,6 +81,7 @@ export default function ChatScreen() {
         />
         <ChatInputSection
           owner={owner!}
+          initialConvo={messages.length === 0}
           repo={repo!}
           branch={branch}
           onSend={handleSend}

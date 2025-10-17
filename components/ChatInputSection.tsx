@@ -1,13 +1,14 @@
 import { BranchPicker } from "@/components/BranchPicker";
 import { ChatInput } from "@/components/ChatInput";
 import { FileList } from "@/components/FileList";
-import { useFileRefsActions, useFileRefsState } from "@/store/fileRefs";
+import { useFileRefsActions } from "@/store/fileRefs";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { GlassView } from "expo-glass-effect";
 import React, { memo, useState } from "react";
 import { View } from "react-native";
 
 interface ChatInputSectionProps {
+  threadId: string;
   owner: string;
   repo: string;
   branch: string;
@@ -18,6 +19,7 @@ interface ChatInputSectionProps {
 }
 
 export const ChatInputSection = memo(function ChatInputSection({
+  threadId,
   owner,
   repo,
   branch,
@@ -27,8 +29,8 @@ export const ChatInputSection = memo(function ChatInputSection({
 }: ChatInputSectionProps) {
   const [prompt, setPrompt] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
-  const { fileRefs } = useFileRefsState();
-  const { setFileRefs } = useFileRefsActions();
+  const { getFileRefs, setFileRefs } = useFileRefsActions();
+  const fileRefs = getFileRefs(threadId);
 
   const handleTextChange = (text: string) => {
     setPrompt(text);
@@ -54,7 +56,7 @@ export const ChatInputSection = memo(function ChatInputSection({
 
     const isDuplicate = fileRefs.some((ref) => ref.path === filePath.path);
     if (!isDuplicate) {
-      setFileRefs([...fileRefs, filePath]);
+      setFileRefs(threadId, [...fileRefs, filePath]);
     }
   };
 

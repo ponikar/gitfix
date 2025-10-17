@@ -8,32 +8,46 @@ type FileRef = {
 };
 
 type FileRefsState = {
-  fileRefs: FileRef[];
+  fileRefs: Record<string, FileRef[]>;
 };
 
 type FileRefsActions = {
-  setFileRefs: (refs: FileRef[]) => void;
-  clearFileRefs: () => void;
+  setFileRefs: (threadId: string, refs: FileRef[]) => void;
+  getFileRefs: (threadId: string) => FileRef[];
+  clearFileRefs: (threadId: string) => void;
+  deleteThread: (threadId: string) => void;
 };
 
-const loadPersistedFileRefs = (): FileRef[] => {
+const loadPersistedFileRefs = (): Record<string, FileRef[]> => {
   const stored = getItem(Storage.FILE_REFS);
-  return stored ? JSON.parse(stored) : [];
+  return stored ? JSON.parse(stored) : {};
 };
 
 const useFileRefsStore = create<{
   state: FileRefsState;
   actions: FileRefsActions;
-}>()((set) => ({
+}>()((set, get) => ({
   state: { fileRefs: loadPersistedFileRefs() },
   actions: {
-    setFileRefs: (refs) => {
-      setItem(Storage.FILE_REFS, JSON.stringify(refs));
-      set((prev) => ({ ...prev, state: { fileRefs: refs } }));
+    setFileRefs: (threadId, refs) => {
+      const updated = { ...get().state.fileRefs, [threadId]: refs };
+      setItem(Storage.FILE_REFS, JSON.stringify(updated));
+      set((prev) => ({ ...prev, state: { fileRefs: updated } }));
     },
-    clearFileRefs: () => {
-      setItem(Storage.FILE_REFS, null);
-      set((prev) => ({ ...prev, state: { fileRefs: [] } }));
+    getFileRefs: (threadId) => {
+      return get().state.fileRefs[threadId] || [];
+    },
+    clearFileRefs: (threadId) => {
+      const updated = { ...get().state.fileRefs };
+      delete updated[threadId];
+      setItem(Storage.FILE_REFS, JSON.stringify(updated));
+      set((prev) => ({ ...prev, state: { fileRefs: updated } }));
+    },
+    deleteThread: (threadId) => {
+      const updated = { ...get().state.fileRefs };
+      delete updated[threadId];
+      setItem(Storage.FILE_REFS, JSON.stringify(updated));
+      set((prev) => ({ ...prev, state: { fileRefs: updated } }));
     },
   },
 }));

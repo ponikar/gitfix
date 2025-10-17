@@ -80,9 +80,10 @@ export default function ChatScreen() {
           installationId={installationId!}
         />
         <ChatInputSection
-          owner={owner!}
+          threadId={threadId}
+          owner={owner}
           initialConvo={messages.length === 0}
-          repo={repo!}
+          repo={repo}
           branch={branch}
           onSend={handleSend}
           onBranchChange={handleBranchChange}

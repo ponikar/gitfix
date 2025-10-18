@@ -1,3 +1,6 @@
+import { API_URL } from "@/lib/api";
+import { setItem } from "@/storage";
+import { Storage } from "@/storage/keys";
 import { useAuthActions } from "@/store/auth";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
 import { useRouter } from "expo-router";
@@ -70,6 +73,28 @@ export function useGitHubAuth() {
 
         if (access_token) {
           setAccessToken(access_token);
+
+          // Verify GitHub token on backend and get JWT
+          try {
+            const verifyResponse = await fetch(`${API_URL}/verify-token`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ accessToken: access_token }),
+            });
+
+            if (verifyResponse.ok) {
+              const { jwtToken } = await verifyResponse.json();
+              setItem(Storage.JWT_TOKEN, jwtToken);
+              console.log("JWT token stored successfully");
+            } else {
+              console.error("Failed to verify GitHub token on backend");
+            }
+          } catch (verifyError) {
+            console.error("Error verifying token with backend:", verifyError);
+          }
+
           router.replace("/repos");
           return { access_token, state };
         } else {

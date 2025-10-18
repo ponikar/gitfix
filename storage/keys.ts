@@ -7,4 +7,5 @@ export const Storage = {
   PR_LINKS: "PR_LINKS",
   THREADS: "THREADS",
   FILE_REFS: "FILE_REFS",
+  JWT_TOKEN: "JWT_TOKEN",
 } as const;

@@ -1,6 +1,6 @@
 import { Tree } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-import { API_URL } from "./api";
+import { fetcher } from "./api";
 
 interface FetchTreeParams {
   owner: string;
@@ -15,7 +15,7 @@ const fetchTree = async ({
   branch,
   installationId,
 }: FetchTreeParams) => {
-  const response = await fetch(`${API_URL}/api/repos/${owner}/${repo}/tree`, {
+  const tree = await fetcher<Tree>(`/api/repos/${owner}/${repo}/tree`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -25,13 +25,7 @@ const fetchTree = async ({
       installationId,
     }),
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch tree");
-  }
-
-  const tree = await response.json();
-  return tree as Tree;
+  return tree;
 };
 
 export const useTree = ({

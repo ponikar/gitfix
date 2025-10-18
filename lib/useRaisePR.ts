@@ -1,6 +1,6 @@
 import { type Message } from "@ai-sdk/react";
 import { useMutation } from "@tanstack/react-query";
-import { API_URL } from "./api";
+import { fetcher } from "./api";
 
 interface RaisePRParams {
   owner: string;
@@ -13,7 +13,10 @@ interface RaisePRParams {
 }
 
 const raisePRFn = async (params: RaisePRParams) => {
-  const response = await fetch(`${API_URL}/api/apply-fix`, {
+  const result = await fetcher<{
+    pullRequestUrl: any;
+    error?: undefined;
+  }>(`/api/apply-fix`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,15 +32,7 @@ const raisePRFn = async (params: RaisePRParams) => {
     }),
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to raise PR");
-  }
-
-  return (await response.json()) as {
-    pullRequestUrl: any;
-    error?: undefined;
-  };
+  return result;
 };
 
 export const useRaisePR = () => {

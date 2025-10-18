@@ -1,9 +1,11 @@
 import { useChanges } from "@/components/ActiveChangesProvider";
+import { getItem } from "@/storage";
+import { Storage } from "@/storage/keys";
 import { useFileRefsActions } from "@/store/fileRefs";
 import { useThreadActions } from "@/store/threads";
 import { useChat, type Message } from "@ai-sdk/react";
 import { fetch as expoFetch } from "expo/fetch";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { API_URL } from "./api";
 
 interface UseChatThreadParams {
@@ -27,12 +29,15 @@ export function useChatThread({
 
   console.log("filesRefs", getFileRefs(threadId));
 
+  const jwtToken = useRef(getItem(Storage.JWT_TOKEN)).current;
+
   const { messages, append } = useChat({
     initialMessages: thread?.messages || [],
     api: `${API_URL}/api/suggest-fix`,
     headers: {
       "Content-Type": "application/json",
       "x-installation-id": installationId.toString(),
+      ...(jwtToken && { Authorization: `Bearer ${jwtToken}` }),
     },
     body: {
       owner,

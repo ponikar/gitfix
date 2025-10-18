@@ -4,6 +4,7 @@ import {
   Pressable,
   PressableProps,
   Text,
+  TextProps,
   View,
 } from "react-native";
 
@@ -148,16 +149,23 @@ export const ButtonIcon = ({ children }: ButtonIconProps) => {
 
 ButtonIcon.displayName = "ButtonIcon";
 
-interface ButtonTextProps {
+interface ButtonTextProps extends TextProps {
   children: string;
 }
 
-export const ButtonText = ({ children }: ButtonTextProps) => {
+export const ButtonText = ({
+  children,
+  className,
+  ...props
+}: ButtonTextProps) => {
   const { variant, size } = useButtonContext();
   const sizeStyle = sizeStyles[size];
 
   return (
-    <Text className={`${sizeStyle.text} ${textColorStyles[variant]}`}>
+    <Text
+      {...props}
+      className={`${sizeStyle.text} ${textColorStyles[variant]} ${className}`}
+    >
       {children}
     </Text>
   );

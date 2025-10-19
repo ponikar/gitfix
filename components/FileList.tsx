@@ -67,6 +67,7 @@ export function FileList({
       renderItem={renderItem}
       keyExtractor={(item) => item.path}
       className="h-[200px]"
+      keyboardShouldPersistTaps="always"
     />
   );
 }

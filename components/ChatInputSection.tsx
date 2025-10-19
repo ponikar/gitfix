@@ -1,9 +1,8 @@
 import { BranchPicker } from "@/components/BranchPicker";
 import { ChatInput } from "@/components/ChatInput";
 import { FileList } from "@/components/FileList";
-import { useFileRefsActions } from "@/store/fileRefs";
+import { useFileRefs, useFileRefsActions } from "@/store/fileRefs";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { GlassView } from "expo-glass-effect";
 import React, { memo, useState } from "react";
 import { View } from "react-native";
 
@@ -29,8 +28,8 @@ export const ChatInputSection = memo(function ChatInputSection({
 }: ChatInputSectionProps) {
   const [prompt, setPrompt] = useState("");
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
-  const { getFileRefs, setFileRefs } = useFileRefsActions();
-  const fileRefs = getFileRefs(threadId);
+  const { setFileRefs } = useFileRefsActions();
+  const fileRefs = useFileRefs(threadId);
 
   const handleTextChange = (text: string) => {
     setPrompt(text);
@@ -69,7 +68,7 @@ export const ChatInputSection = memo(function ChatInputSection({
 
   return (
     <ChatInput.Container>
-      <GlassView
+      {/* <GlassView
         style={{
           position: "absolute",
           left: 0,
@@ -77,7 +76,7 @@ export const ChatInputSection = memo(function ChatInputSection({
           bottom: 0,
           top: 0,
         }}
-      />
+      /> */}
       {searchQuery !== null && (
         <FileList
           owner={owner}

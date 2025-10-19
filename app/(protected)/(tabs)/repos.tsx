@@ -109,7 +109,7 @@ export default function ReposScreen() {
   }
 
   return (
-    <View className="flex-1 dark:bg-gray-900 bg-white">
+    <View className="flex-1 bg-white">
       <FlatList
         data={repos}
         onRefresh={refetch}
@@ -135,10 +135,10 @@ export default function ReposScreen() {
                 item.full_name.split("/")[1]
               )
             }
-            className="bg-white border-b border-gray-200 flex flex-row items-center gap-2 dark:bg-gray-800 rounded-lg p-3.5"
+            className="bg-white border-b border-gray-200 flex flex-row items-center gap-2 rounded-lg p-3.5"
           >
             {/* <AntDesign name="folder-open" size={22} color="black" /> */}
-            <Text className="text-base font-medium text-black dark:text-white">
+            <Text className="text-base font-medium text-black">
               {item.full_name}
             </Text>
           </TouchableOpacity>

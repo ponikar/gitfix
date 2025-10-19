@@ -39,7 +39,7 @@ const ChatInputInput = ({
 }: ChatInputInputProps) => {
   return (
     <TextInput
-      className="flex-1 px-2 bg-transparent max-h-[50px] dark:bg-gray-700 text-black dark:text-white"
+      className="flex-1 px-2 bg-transparent max-h-[50px] text-black"
       placeholder={placeholder}
       value={value}
       onChangeText={onChangeText}
@@ -51,7 +51,7 @@ const ChatInputInput = ({
 
 const ChatInputButton = ({ onPress, children }: ChatInputButtonProps) => {
   return (
-    <Pressable onPress={onPress} className="bg-slate-800 rounded-full p-2">
+    <Pressable onPress={onPress} className="bg-black rounded-full p-2">
       {children}
     </Pressable>
   );

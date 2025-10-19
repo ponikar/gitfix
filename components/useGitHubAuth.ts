@@ -75,24 +75,20 @@ export function useGitHubAuth() {
           setAccessToken(access_token);
 
           // Verify GitHub token on backend and get JWT
-          try {
-            const verifyResponse = await fetch(`${API_URL}/verify-token`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ accessToken: access_token }),
-            });
+          const verifyResponse = await fetch(`${API_URL}/verify-token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ accessToken: access_token }),
+          });
 
-            if (verifyResponse.ok) {
-              const { jwtToken } = await verifyResponse.json();
-              setItem(Storage.JWT_TOKEN, jwtToken);
-              console.log("JWT token stored successfully");
-            } else {
-              console.error("Failed to verify GitHub token on backend");
-            }
-          } catch (verifyError) {
-            console.error("Error verifying token with backend:", verifyError);
+          if (verifyResponse.ok) {
+            const { jwtToken } = await verifyResponse.json();
+            setItem(Storage.JWT_TOKEN, jwtToken);
+            console.log("JWT token stored successfully");
+          } else {
+            throw new Error("Failed to verify GitHub token on backend");
           }
 
           router.replace("/repos");

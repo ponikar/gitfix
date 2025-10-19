@@ -13,7 +13,6 @@ type FileRefsState = {
 
 type FileRefsActions = {
   setFileRefs: (threadId: string, refs: FileRef[]) => void;
-  getFileRefs: (threadId: string) => FileRef[];
   clearFileRefs: (threadId: string) => void;
   deleteThread: (threadId: string) => void;
 };
@@ -34,9 +33,6 @@ const useFileRefsStore = create<{
       setItem(Storage.FILE_REFS, JSON.stringify(updated));
       set((prev) => ({ ...prev, state: { fileRefs: updated } }));
     },
-    getFileRefs: (threadId) => {
-      return get().state.fileRefs[threadId] || [];
-    },
     clearFileRefs: (threadId) => {
       const updated = { ...get().state.fileRefs };
       delete updated[threadId];
@@ -52,6 +48,11 @@ const useFileRefsStore = create<{
   },
 }));
 
-export const useFileRefsState = () => useFileRefsStore((state) => state.state);
+export const useFileRefs = (threadId: string) => {
+  const { fileRefs } = useFileRefsStore((s) => s.state);
+
+  return fileRefs[threadId] ?? [];
+};
+
 export const useFileRefsActions = () =>
   useFileRefsStore((state) => state.actions);

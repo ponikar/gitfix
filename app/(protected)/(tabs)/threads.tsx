@@ -11,8 +11,8 @@ export default function ThreadsScreen() {
 
   if (threads.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center dark:bg-gray-900 bg-white">
-        <Text className="text-gray-500 dark:text-gray-400">
+      <View className="flex-1 items-center justify-center bg-white">
+        <Text className="text-gray-500">
           No threads yet. Start a conversation!
         </Text>
       </View>
@@ -20,7 +20,7 @@ export default function ThreadsScreen() {
   }
 
   return (
-    <View className="flex-1 dark:bg-gray-900 bg-white">
+    <View className="flex-1 bg-white">
       <FlatList
         data={sortedThreads}
         keyExtractor={(item) => item.id}
@@ -40,23 +40,20 @@ export default function ThreadsScreen() {
               }}
               asChild
             >
-              <TouchableOpacity className="bg-white border-b border-gray-200 dark:bg-gray-800 p-4">
+              <TouchableOpacity className="bg-white border-b border-gray-200 p-4">
                 <View className="flex flex-row items-center gap-2 mb-1">
                   <AntDesign name="github" size={18} color="gray" />
-                  <Text className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <Text className="text-sm font-semibold text-gray-700">
                     {item.owner}/{item.repo}
                   </Text>
                 </View>
                 <Text
-                  className="text-base font-medium text-black dark:text-white mb-1"
+                  className="text-base font-medium text-black mb-1"
                   numberOfLines={1}
                 >
                   {item.title}
                 </Text>
-                <Text
-                  className="text-sm text-gray-600 dark:text-gray-400"
-                  numberOfLines={2}
-                >
+                <Text className="text-sm text-gray-600" numberOfLines={2}>
                   {lastMessageText}
                 </Text>
               </TouchableOpacity>

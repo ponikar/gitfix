@@ -4,7 +4,8 @@ import { ToolInvocation } from "@ai-sdk/ui-utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { structuredPatch } from "diff";
 import { useEffect } from "react";
-import { FlatList, Linking, Text, View } from "react-native";
+import { Linking, Text, View } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 import { useChanges } from "../components/ActiveChangesProvider";
 import { Button, ButtonIcon, ButtonText } from "./Button";
 
@@ -50,7 +51,7 @@ export const DiffView = ({
   const renderHunk = (hunk: Hunk, index: number) => {
     return (
       <View key={index} className="mt-2">
-        <Text className="text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-slate-600 px-2 py-1 font-mono">
+        <Text className="text-gray-500  bg-gray-200 px-2 py-1 font-mono">
           {`@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`}
         </Text>
         {hunk.lines.map((line, lineIndex) => {
@@ -59,20 +60,18 @@ export const DiffView = ({
           let lineStyle = "bg-transparent";
           let prefixChar = " ";
           if (prefix === "+") {
-            lineStyle = "bg-green-100 dark:bg-green-900";
+            lineStyle = "bg-green-100";
             prefixChar = "+";
           } else if (prefix === "-") {
-            lineStyle = "bg-red-100 dark:bg-red-900";
+            lineStyle = "bg-red-100";
             prefixChar = "-";
           }
           return (
             <View key={lineIndex} className={`flex-col ${lineStyle}`}>
-              <Text className="text-gray-500 dark:text-gray-400 w-8 text-right pr-2 font-mono">
+              <Text className="text-gray-500 w-8 text-right pr-2 font-mono">
                 {prefixChar}
               </Text>
-              <Text className="text-black dark:text-white font-mono">
-                {content}
-              </Text>
+              <Text className="text-black font-mono">{content}</Text>
             </View>
           );
         })}
@@ -81,8 +80,8 @@ export const DiffView = ({
   };
 
   return (
-    <View className="mt-2 p-2 bg-gray-100 dark:bg-slate-700 rounded-md">
-      <Text className="font-bold text-black dark:text-white">{path}</Text>
+    <View className="mt-2 p-2 bg-gray-100 rounded-md">
+      <Text className="font-bold text-black">{path}</Text>
       {patch.hunks.map(renderHunk)}
     </View>
   );
@@ -121,7 +120,7 @@ const ReadingFilesList = ({
   return (
     <View className="gap-y-1">
       <View className="flex-row items-center">
-        <Text className="text-black mb-2 font-bold dark:text-white">
+        <Text className="text-black mb-2 font-bold">
           Reading file{files.length > 1 ? "s" : ""}
         </Text>
       </View>
@@ -316,13 +315,11 @@ export function SimpleChat({
         className={`p-3 rounded-2xl my-2 ${
           isUser
             ? "bg-slate-800 self-end max-w-[80%]"
-            : "border bg-white border-gray-200 dark:bg-slate-800 self-start"
+            : "border bg-white border-gray-200 self-start"
         }`}
       >
         {item.content ? (
-          <Text
-            className={isUser ? "text-white" : "text-black dark:text-white"}
-          >
+          <Text className={isUser ? "text-white" : "text-black"}>
             {item.content?.trim()}
           </Text>
         ) : null}

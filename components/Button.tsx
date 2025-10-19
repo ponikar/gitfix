@@ -32,23 +32,20 @@ const useButtonContext = () => {
 };
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    "bg-slate-800 active:bg-blue-600 disabled:bg-slate-500 dark:bg-blue-600 dark:active:bg-blue-700",
-  secondary:
-    "bg-gray-200 active:bg-gray-300 disabled:bg-gray-100 dark:bg-slate-700 dark:active:bg-slate-600",
+  primary: "bg-slate-800 active:bg-blue-600 disabled:bg-slate-500",
+  secondary: "bg-gray-200 active:bg-gray-300 disabled:bg-gray-100",
   outline:
-    "border-2 border-blue-500 active:bg-blue-50 disabled:border-blue-300 dark:border-blue-400 dark:active:bg-slate-800",
-  danger:
-    "bg-red-500 active:bg-red-600 disabled:bg-red-300 dark:bg-red-600 dark:active:bg-red-700",
-  ghost: "active:bg-gray-100 disabled:opacity-50 dark:active:bg-slate-700",
+    "border-2 border-blue-500 active:bg-blue-50 disabled:border-blue-300",
+  danger: "bg-red-500 active:bg-red-600 disabled:bg-red-300",
+  ghost: "active:bg-gray-100 disabled:opacity-50",
 };
 
 const textColorStyles: Record<ButtonVariant, string> = {
   primary: "text-white",
-  secondary: "text-black dark:text-white",
-  outline: "text-blue-500 dark:text-blue-400",
+  secondary: "text-black",
+  outline: "text-blue-500",
   danger: "text-white",
-  ghost: "text-black dark:text-white",
+  ghost: "text-black",
 };
 
 const sizeStyles: Record<ButtonSize, { container: string; text: string }> = {

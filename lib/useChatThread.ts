@@ -1,7 +1,7 @@
 import { useChanges } from "@/components/ActiveChangesProvider";
 import { getItem } from "@/storage";
 import { Storage } from "@/storage/keys";
-import { useFileRefsActions } from "@/store/fileRefs";
+import { useFileRefs } from "@/store/fileRefs";
 import { useThreadActions } from "@/store/threads";
 import { useChat, type Message } from "@ai-sdk/react";
 import { fetch as expoFetch } from "expo/fetch";
@@ -23,11 +23,9 @@ export function useChatThread({
 }: UseChatThreadParams) {
   const { setActiveChanges, getActiveChanges } = useChanges();
   const { getThread, addMessage } = useThreadActions();
-  const { getFileRefs } = useFileRefsActions();
 
   const thread = useMemo(() => getThread(threadId), [threadId, getThread]);
-
-  console.log("filesRefs", getFileRefs(threadId));
+  const fileRefs = useFileRefs(threadId);
 
   const jwtToken = useRef(getItem(Storage.JWT_TOKEN)).current;
 
@@ -42,7 +40,7 @@ export function useChatThread({
     body: {
       owner,
       repo,
-      files: getFileRefs(threadId),
+      files: fileRefs,
       activeChanges: getActiveChanges(threadId),
     },
     fetch: expoFetch as unknown as typeof globalThis.fetch,

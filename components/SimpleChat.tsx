@@ -1,3 +1,4 @@
+import { MessageToolFiles, MessageToolResult } from "@/lib/useChatThread";
 import { useRaisePR } from "@/lib/useRaisePR";
 import { type Message } from "@ai-sdk/react";
 import { ToolInvocation } from "@ai-sdk/ui-utils";
@@ -87,32 +88,13 @@ export const DiffView = ({
   );
 };
 
-type ToolResult =
-  | {
-      fileContents: { path: string; content: string }[];
-      response:
-        | {
-            type: "TEXT_RESPONSE";
-            response: string;
-          }
-        | {
-            type: "GIT_DIFF";
-            files: {
-              path: string;
-              originalContent: string;
-              newContent: string;
-            }[];
-          };
-    }
-  | {
-      error: string;
-    };
+type ToolResult = MessageToolResult;
 
 const ReadingFilesList = ({
   files,
   toolCallId,
 }: {
-  files: { path: string; content: string }[];
+  files: MessageToolFiles;
   toolCallId: string;
 }) => {
   if (!Array.isArray(files) || files.length === 0) return null;
@@ -144,11 +126,7 @@ const GitDiffResponse = ({
   onRaisePR,
   onViewOnGithub,
 }: {
-  files: {
-    path: string;
-    originalContent: string;
-    newContent: string;
-  }[];
+  files: MessageToolFiles;
   prExists: string | undefined;
   isPending: boolean;
   onRaisePR: () => void;
@@ -223,7 +201,7 @@ const ToolInvocationContent = ({
   }, [data, toolInvocation.toolCallId, setPrLink]);
 
   if (
-    toolInvocation.toolName !== "downloadFileContent" ||
+    toolInvocation.toolName !== "fetchFilesAndResolveQuery" ||
     toolInvocation.state !== "result"
   ) {
     return null;
@@ -239,16 +217,16 @@ const ToolInvocationContent = ({
       return <ErrorMessage error={toolResult.error} />;
     }
 
-    const { fileContents, response } = toolResult;
-
     const handleRaisePR = () => {
-      if (response.type !== "GIT_DIFF") return;
+      if (!toolResult.fileContents) return;
 
       const head = `gitfix/patch-${Date.now()}`;
-      const files = response.files.map((f) => ({
+      const files = toolResult.fileContents?.files.map((f) => ({
         path: f.path,
         content: f.newContent,
       }));
+
+      console.log("file -> new content", files);
 
       raisePR({
         owner,
@@ -265,23 +243,27 @@ const ToolInvocationContent = ({
       Linking.openURL(url);
     };
 
+    console.log("tooLresult", toolResult.fileContents);
+
     return (
       <View>
-        <ReadingFilesList
-          files={fileContents}
-          toolCallId={toolInvocation.toolCallId}
-        />
-        {response.type === "TEXT_RESPONSE" && (
-          <TextResponse text={response.response} />
+        {toolResult.response?.type === "TEXT_RESPONSE" && (
+          <TextResponse text={toolResult.response?.response} />
         )}
-        {response.type === "GIT_DIFF" && (
-          <GitDiffResponse
-            files={response.files}
-            prExists={prExists}
-            isPending={isPending}
-            onRaisePR={handleRaisePR}
-            onViewOnGithub={handleViewOnGithub}
-          />
+        {toolResult.fileContents?.type === "GIT_DIFF" && (
+          <>
+            <ReadingFilesList
+              files={toolResult.fileContents.files}
+              toolCallId={toolInvocation.toolCallId}
+            />
+            <GitDiffResponse
+              files={toolResult.fileContents.files}
+              prExists={prExists}
+              isPending={isPending}
+              onRaisePR={handleRaisePR}
+              onViewOnGithub={handleViewOnGithub}
+            />
+          </>
         )}
       </View>
     );
@@ -317,8 +299,8 @@ export function SimpleChat({
           <View
             className={`p-3 rounded-2xl ${
               isUser
-                ? "bg-slate-800 max-w-[80%]"
-                : "border bg-white border-gray-200"
+                ? "bg-slate-800 self-end max-w-[80%]"
+                : "border bg-white border-gray-200 self-start"
             }`}
           >
             {item.content ? (

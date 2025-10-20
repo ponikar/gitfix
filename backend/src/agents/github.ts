@@ -43,6 +43,13 @@ export class Github {
     file_sha: string
   ) {
     const octokit = await this.app;
+
+    console.log("[getFileContent] -> Fetching files", {
+      owner,
+      repo,
+      file_sha,
+    });
+
     const { data } = await octokit.rest.git.getBlob({
       owner,
       repo,
@@ -54,6 +61,8 @@ export class Github {
     }
 
     const decoded = atob(data.content);
+
+    console.log("[getFileContent] -> DONE");
 
     return decoded;
   }
@@ -91,6 +100,7 @@ export class Github {
 
             console.log("changetype", changeType, this.activeChanges);
 
+            // supports incremental changes
             const content =
               changeType === "incremental" && activeChange
                 ? activeChange
@@ -99,6 +109,7 @@ export class Github {
             return {
               path: file.path,
               content,
+              initialContent: originalContent,
             };
           })
         );
@@ -116,18 +127,13 @@ export class Github {
             .array(
               z.object({
                 path: z.string().describe("The path of the file."),
-                originalContent: z
-                  .string()
-                  .describe(
-                    "The original content of the file that was used to generate the diff."
-                  ),
                 newContent: z
                   .string()
                   .describe("The new, modified content of the file."),
               })
             )
             .describe(
-              "An array of files with their original and new part of content for diffing."
+              "An array of files with their new part of content for diffing."
             ),
         });
 
@@ -167,8 +173,38 @@ export class Github {
           ],
         });
 
-        return { fileContents, response };
+        console.log(
+          "[fetchFilesAndResolveQuery:generateObject] -> response",
+          response
+        );
+
+        if (response.type === "TEXT_RESPONSE") {
+          return { response };
+        }
+
+        if (response.type === "GIT_DIFF") {
+          const mergedFiles = response.files.map((respFile: any) => {
+            const sourceFile = fileContents.find(
+              (f) => f.path === respFile.path
+            );
+            return {
+              path: sourceFile?.path,
+              originalContent: sourceFile?.initialContent,
+              newContent: respFile.newContent,
+            };
+          });
+          return {
+            fileContents: {
+              files: mergedFiles,
+              type: "GIT_DIFF",
+            },
+          };
+        }
+
+        return {};
       } catch (error: any) {
+        console.log("[fetchFilesAndResolveQuery] -> ERROR", error);
+
         return { error: error.message };
       }
     },
@@ -208,6 +244,11 @@ export class Github {
 
       const fileBlobs = await Promise.all(
         files.map(async (file) => {
+          console.log(
+            "Creating a blog for this particualr file content",
+            file.content
+          );
+
           const { data: blob } = await octokit.rest.git.createBlob({
             owner,
             repo,

@@ -15,6 +15,22 @@ interface UseChatThreadParams {
   installationId: number;
 }
 
+export type MessageToolFiles = Array<{
+  path: string;
+  newContent: string;
+  originalContent: string;
+}>;
+export type MessageToolResult = {
+  fileContents?: {
+    type: "GIT_DIFF";
+    files: MessageToolFiles;
+  };
+  response?: {
+    type: "TEXT_RESPONSE";
+    response: string;
+  };
+};
+
 export function useChatThread({
   threadId,
   owner,
@@ -53,26 +69,24 @@ export function useChatThread({
         (part) => part.type === "tool-invocation"
       );
 
+      // storing snapshot of new changes
+      // so we can treat it as snapshot later
       if (toolInvocations && toolInvocations.length > 0) {
         for (const part of toolInvocations) {
           if (part.type === "tool-invocation") {
             const toolInvocation = part.toolInvocation;
             if (
-              toolInvocation.toolName === "downloadFileContent" &&
+              toolInvocation.toolName === "fetchFilesAndResolveQuery" &&
               toolInvocation.state === "result"
             ) {
-              const result = toolInvocation.result as {
-                response: {
-                  type: string;
-                  files?: Array<{ path: string; newContent: string }>;
-                };
-              };
+              const result = toolInvocation.result as MessageToolResult;
+
               if (
-                result.response?.type === "GIT_DIFF" &&
-                result.response.files
+                result.fileContents?.type === "GIT_DIFF" &&
+                result.fileContents.files
               ) {
                 const activeChanges: { [filePath: string]: string } = {};
-                result.response.files.forEach((file) => {
+                result.fileContents.files.forEach((file) => {
                   activeChanges[file.path] = file.newContent;
                 });
                 setActiveChanges(threadId, activeChanges);

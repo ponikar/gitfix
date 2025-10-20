@@ -63,7 +63,7 @@ export class Github {
     console.log("Setting file details", this.fileDetails);
   }
 
-  getFileContents = tool({
+  fetchFilesAndResolveQuery = tool({
     description: "Get the content of multiple files from a GitHub repository",
     parameters: z.object({
       aiPrompt: z

@@ -2,10 +2,10 @@ import { useRaisePR } from "@/lib/useRaisePR";
 import { type Message } from "@ai-sdk/react";
 import { ToolInvocation } from "@ai-sdk/ui-utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { FlashList } from "@shopify/flash-list";
 import { structuredPatch } from "diff";
 import { useEffect } from "react";
 import { Linking, Text, View } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
 import { useChanges } from "../components/ActiveChangesProvider";
 import { Button, ButtonIcon, ButtonText } from "./Button";
 
@@ -300,52 +300,50 @@ export function SimpleChat({
   base,
   installationId,
 }: SimpleChatProps) {
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isUser = item.role === "user";
-
-    const toolInvocations = item.parts
-      ?.filter((part) => part.type === "tool-invocation")
-      .map((part) =>
-        part.type === "tool-invocation" ? part.toolInvocation : null
-      )
-      .filter((p) => p !== null);
-
-    return (
-      <View
-        className={`p-3 rounded-2xl my-2 ${
-          isUser
-            ? "bg-slate-800 self-end max-w-[80%]"
-            : "border bg-white border-gray-200 self-start"
-        }`}
-      >
-        {item.content ? (
-          <Text className={isUser ? "text-white" : "text-black"}>
-            {item.content?.trim()}
-          </Text>
-        ) : null}
-        {toolInvocations && toolInvocations.length > 0 ? (
-          <View className="mt-2 flex gap-y-2">
-            {toolInvocations.map((toolInvocation, index) => (
-              <ToolInvocationContent
-                key={`${toolInvocation.toolCallId}-${index}`}
-                toolInvocation={toolInvocation}
-                owner={owner}
-                repo={repo}
-                base={base}
-                installationId={installationId}
-                messages={messages}
-              />
-            ))}
-          </View>
-        ) : null}
-      </View>
-    );
-  };
-
   return (
-    <FlatList
+    <FlashList
       data={messages}
-      renderItem={renderMessage}
+      renderItem={({ item }: { item: Message }) => {
+        const isUser = item.role === "user";
+
+        const toolInvocations = item.parts
+          ?.filter((part) => part.type === "tool-invocation")
+          .map((part) =>
+            part.type === "tool-invocation" ? part.toolInvocation : null
+          )
+          .filter((p) => p !== null);
+
+        return (
+          <View
+            className={`p-3 rounded-2xl ${
+              isUser
+                ? "bg-slate-800 max-w-[80%]"
+                : "border bg-white border-gray-200"
+            }`}
+          >
+            {item.content ? (
+              <Text className={isUser ? "text-white" : "text-black"}>
+                {item.content?.trim()}
+              </Text>
+            ) : null}
+            {toolInvocations && toolInvocations.length > 0 ? (
+              <View className="mt-2 flex gap-y-2">
+                {toolInvocations.map((toolInvocation, index) => (
+                  <ToolInvocationContent
+                    key={`${toolInvocation.toolCallId}-${index}`}
+                    toolInvocation={toolInvocation}
+                    owner={owner}
+                    repo={repo}
+                    base={base}
+                    installationId={installationId}
+                    messages={messages}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
+        );
+      }}
       keyExtractor={(item) => item.id}
       className="flex-1"
       contentContainerClassName="p-2"

@@ -155,6 +155,12 @@ export class Github {
 
             Analyze the user's query and the file content carefully to make the right choice.
 
+            **IMPORTANT - Character Handling:**
+            - Preserve ALL special characters exactly as they appear in the original content.
+            - Do NOT escape, modify, or replace any characters (including quotes, accents, unicode characters, etc.).
+            - Return the content as-is without any character conversion.
+            - Focus only on the requested changes, do not reformat or alter the content unnecessarily.
+
             User Query: ${aiPrompt}
           `,
           messages: [

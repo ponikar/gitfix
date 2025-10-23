@@ -3,12 +3,17 @@ import { useRaisePR } from "@/lib/useRaisePR";
 import { type Message } from "@ai-sdk/react";
 import { ToolInvocation } from "@ai-sdk/ui-utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list";
 import { structuredPatch } from "diff";
+import { cssInterop } from "nativewind";
 import { useEffect } from "react";
 import { Linking, Text, View } from "react-native";
 import { useChanges } from "../components/ActiveChangesProvider";
 import { Button, ButtonIcon, ButtonText } from "./Button";
+
+cssInterop(LegendList, {
+  className: "style",
+});
 
 export interface SimpleChatProps {
   messages: Message[];
@@ -283,7 +288,8 @@ export function SimpleChat({
   installationId,
 }: SimpleChatProps) {
   return (
-    <FlashList
+    <LegendList
+      recycleItems={false}
       data={messages}
       renderItem={({ item }: { item: Message }) => {
         const isUser = item.role === "user";
@@ -297,7 +303,7 @@ export function SimpleChat({
 
         return (
           <View
-            className={`p-3 rounded-2xl ${
+            className={`p-3 my-2.5 rounded-2xl ${
               isUser
                 ? "bg-slate-800 self-end max-w-[80%]"
                 : "border bg-white border-gray-200 self-start"

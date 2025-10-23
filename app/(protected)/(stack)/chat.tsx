@@ -3,8 +3,9 @@ import { SimpleChat } from "@/components/SimpleChat";
 import { useBranches } from "@/lib/useBranches";
 import { useChatThread } from "@/lib/useChatThread";
 import { useInstallationState } from "@/store/installation";
+import { LegendListRef } from "@legendapp/list";
 import { useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -22,6 +23,11 @@ export default function ChatScreen() {
     owner: owner!,
     repo: repo!,
     installationId: installationId!,
+    onFinish: () => {
+      setTimeout(() => {
+        chatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    },
   });
 
   const { data: branches } = useBranches({
@@ -31,6 +37,7 @@ export default function ChatScreen() {
   });
 
   const [branch, setBranch] = useState<string>("main");
+  const chatListRef = useRef<LegendListRef>(null);
 
   console.log("branch", branch);
 
@@ -54,6 +61,9 @@ export default function ChatScreen() {
   const handleSend = useCallback(
     (prompt: string) => {
       sendMessage(prompt);
+      setTimeout(() => {
+        chatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     },
     [sendMessage]
   );
@@ -73,6 +83,7 @@ export default function ChatScreen() {
         behavior="height"
       >
         <SimpleChat
+          ref={chatListRef}
           messages={messages}
           owner={owner!}
           repo={repo!}

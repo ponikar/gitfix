@@ -13,6 +13,7 @@ interface UseChatThreadParams {
   owner: string;
   repo: string;
   installationId: number;
+  onFinish?: () => void;
 }
 
 export type MessageToolFiles = Array<{
@@ -36,6 +37,7 @@ export function useChatThread({
   owner,
   repo,
   installationId,
+  onFinish: onFinishCallback,
 }: UseChatThreadParams) {
   const { setActiveChanges, getActiveChanges } = useChanges();
   const { getThread, addMessage } = useThreadActions();
@@ -94,6 +96,10 @@ export function useChatThread({
             }
           }
         }
+      }
+
+      if (onFinishCallback) {
+        onFinishCallback();
       }
     },
   });

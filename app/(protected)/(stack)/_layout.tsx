@@ -21,6 +21,17 @@ export default function StackLayout() {
             };
           }}
         />
+        <Stack.Screen
+          name="file-viewer"
+          options={({ route }) => {
+            const params = route.params as { fileName?: string } | undefined;
+            return {
+              title: params?.fileName || "File Viewer",
+              headerBackVisible: true,
+              headerBackTitle: "Back",
+            };
+          }}
+        />
       </Stack>
     </ChangesProvider>
   );

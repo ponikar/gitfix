@@ -49,6 +49,7 @@ export function BranchPicker({
         <ContextMenu.Items>
           {branchNames.map((b, index) => (
             <Button
+              key={b}
               variant="glass"
               systemImage={branch === b ? "checkmark" : undefined}
               onPress={() => onBranchChange(branchNames[index])}

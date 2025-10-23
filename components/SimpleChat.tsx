@@ -4,8 +4,10 @@ import { type Message } from "@ai-sdk/react";
 import { ToolInvocation } from "@ai-sdk/ui-utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { LegendList, LegendListRef } from "@legendapp/list";
 import { structuredPatch } from "diff";
+import { Link } from "expo-router";
 import { cssInterop } from "nativewind";
 import { forwardRef, useEffect, useState } from "react";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
@@ -113,9 +115,28 @@ const ReadingFilesList = ({
         </Text>
       </View>
       {files.map((file, index) => (
-        <Text key={`${toolCallId}-${index}`} className="font-medium">
-          📄 {file.path}
-        </Text>
+        <View
+          key={file.path}
+          className="flex flex-row items-center justify-between"
+        >
+          <Text key={`${toolCallId}-${index}`} className="font-medium">
+            📄 {file.path}
+          </Text>
+
+          <Link
+            href={{
+              pathname: "/(protected)/(stack)/file-viewer",
+              params: {
+                fileName: file.path,
+                newContent: file.newContent,
+                originalContent: file.originalContent,
+              },
+            }}
+            className="p-2"
+          >
+            <MaterialIcons name="zoom-out-map" size={20} color="black" />
+          </Link>
+        </View>
       ))}
     </View>
   );

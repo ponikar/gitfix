@@ -1,7 +1,7 @@
 import { getItem } from "@/storage";
 import { Storage } from "@/storage/keys";
 
-export const API_URL = "http://localhost:8787";
+export const API_URL = process.env.EXPO_PUBLIC_API_END_POINT;
 
 export const fetcher = async <T>(
   endpoint: string,

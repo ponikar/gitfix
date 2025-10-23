@@ -90,7 +90,23 @@ export const DiffView = ({
 
   return (
     <View className="mt-2 p-2 bg-gray-100 rounded-md">
-      <Text className="font-bold text-black">{path}</Text>
+      <View className="flex flex-row items-center justify-between gap-2">
+        <Text className="font-bold text-black">{path}</Text>
+
+        <Link
+          href={{
+            pathname: "/(protected)/(stack)/file-viewer",
+            params: {
+              fileName: path,
+              newContent: newContent,
+              originalContent: originalContent,
+            },
+          }}
+          className="p-2"
+        >
+          <MaterialIcons name="zoom-out-map" size={20} color="black" />
+        </Link>
+      </View>
       {patch.hunks.map(renderHunk)}
     </View>
   );
@@ -122,20 +138,6 @@ const ReadingFilesList = ({
           <Text key={`${toolCallId}-${index}`} className="font-medium">
             📄 {file.path}
           </Text>
-
-          <Link
-            href={{
-              pathname: "/(protected)/(stack)/file-viewer",
-              params: {
-                fileName: file.path,
-                newContent: file.newContent,
-                originalContent: file.originalContent,
-              },
-            }}
-            className="p-2"
-          >
-            <MaterialIcons name="zoom-out-map" size={20} color="black" />
-          </Link>
         </View>
       ))}
     </View>

@@ -3,11 +3,12 @@ import { useRaisePR } from "@/lib/useRaisePR";
 import { type Message } from "@ai-sdk/react";
 import { ToolInvocation } from "@ai-sdk/ui-utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
 import { LegendList, LegendListRef } from "@legendapp/list";
 import { structuredPatch } from "diff";
 import { cssInterop } from "nativewind";
-import { forwardRef, useEffect } from "react";
-import { Linking, Text, View } from "react-native";
+import { forwardRef, useEffect, useState } from "react";
+import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useChanges } from "../components/ActiveChangesProvider";
 import { Button, ButtonIcon, ButtonText } from "./Button";
 
@@ -282,56 +283,82 @@ const ToolInvocationContent = ({
 
 export const SimpleChat = forwardRef<LegendListRef, SimpleChatProps>(
   ({ messages, owner, repo, base, installationId }, ref) => {
+    const [showScrollButton, setShowScrollButton] = useState(false);
+
+    const handleScroll = (event: any) => {
+      const { contentOffset, contentSize, layoutMeasurement } =
+        event.nativeEvent;
+      const isNearBottom =
+        contentOffset.y + layoutMeasurement.height >= contentSize.height - 100;
+      setShowScrollButton(!isNearBottom);
+    };
+
+    const scrollToEnd = () => {
+      (ref as any)?.current?.scrollToEnd({ animated: true });
+    };
+
     return (
-      <LegendList
-        ref={ref}
-        recycleItems={false}
-        data={messages}
-        renderItem={({ item }: { item: Message }) => {
-          const isUser = item.role === "user";
+      <View className="flex-1 relative">
+        <LegendList
+          ref={ref}
+          recycleItems={false}
+          data={messages}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          renderItem={({ item }: { item: Message }) => {
+            const isUser = item.role === "user";
 
-          const toolInvocations = item.parts
-            ?.filter((part) => part.type === "tool-invocation")
-            .map((part) =>
-              part.type === "tool-invocation" ? part.toolInvocation : null
-            )
-            .filter((p) => p !== null);
+            const toolInvocations = item.parts
+              ?.filter((part) => part.type === "tool-invocation")
+              .map((part) =>
+                part.type === "tool-invocation" ? part.toolInvocation : null
+              )
+              .filter((p) => p !== null);
 
-          return (
-            <View
-              className={`p-3 my-2.5 rounded-2xl ${
-                isUser
-                  ? "bg-slate-800 self-end max-w-[80%]"
-                  : "border bg-white border-gray-200 self-start"
-              }`}
-            >
-              {item.content ? (
-                <Text className={isUser ? "text-white" : "text-black"}>
-                  {item.content?.trim()}
-                </Text>
-              ) : null}
-              {toolInvocations && toolInvocations.length > 0 ? (
-                <View className="mt-2 flex gap-y-2">
-                  {toolInvocations.map((toolInvocation, index) => (
-                    <ToolInvocationContent
-                      key={`${toolInvocation.toolCallId}-${index}`}
-                      toolInvocation={toolInvocation}
-                      owner={owner}
-                      repo={repo}
-                      base={base}
-                      installationId={installationId}
-                      messages={messages}
-                    />
-                  ))}
-                </View>
-              ) : null}
-            </View>
-          );
-        }}
-        keyExtractor={(item) => item.id}
-        className="flex-1"
-        contentContainerClassName="p-2"
-      />
+            return (
+              <View
+                className={`p-3 my-2.5 rounded-2xl ${
+                  isUser
+                    ? "bg-slate-800 self-end max-w-[80%]"
+                    : "border bg-white border-gray-200 self-start"
+                }`}
+              >
+                {item.content ? (
+                  <Text className={isUser ? "text-white" : "text-black"}>
+                    {item.content?.trim()}
+                  </Text>
+                ) : null}
+                {toolInvocations && toolInvocations.length > 0 ? (
+                  <View className="mt-2 flex gap-y-2">
+                    {toolInvocations.map((toolInvocation, index) => (
+                      <ToolInvocationContent
+                        key={`${toolInvocation.toolCallId}-${index}`}
+                        toolInvocation={toolInvocation}
+                        owner={owner}
+                        repo={repo}
+                        base={base}
+                        installationId={installationId}
+                        messages={messages}
+                      />
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            );
+          }}
+          keyExtractor={(item) => item.id}
+          className="flex-1"
+          contentContainerClassName="p-2"
+        />
+        {showScrollButton && (
+          <TouchableOpacity
+            onPress={scrollToEnd}
+            className="absolute bottom-4 right-4 p-2.5 bg-white border border-gray-300 rounded-lg"
+          >
+            <Feather name="arrow-down" size={18} color="#666" />
+          </TouchableOpacity>
+        )}
+      </View>
     );
   }
 );

@@ -47,13 +47,13 @@ export default function ThreadsScreen() {
                     {item.owner}/{item.repo}
                   </Text>
                 </View>
-                <Text
+                {/* <Text
                   className="text-base font-medium text-black mb-1"
                   numberOfLines={1}
                 >
                   {item.title}
-                </Text>
-                <Text className="text-sm text-gray-600" numberOfLines={2}>
+                </Text> */}
+                <Text className="text-sm text-gray-600" numberOfLines={1}>
                   {lastMessageText}
                 </Text>
               </TouchableOpacity>

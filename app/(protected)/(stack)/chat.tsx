@@ -6,19 +6,15 @@ import { useInstallationState } from "@/store/installation";
 import { LegendListRef } from "@legendapp/list";
 import { useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView } from "react-native";
+import { KeyboardAvoidingView, View, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChatScreen() {
-  const { owner, repo, threadId } = useLocalSearchParams<{
-    owner: string;
-    repo: string;
-    threadId: string;
-  }>();
+  const { owner, repo, threadId } = useLocalSearchParams<{ owner: string; repo: string; threadId: string; }>();
 
   const { installationId } = useInstallationState();
 
-  const { thread, messages, sendMessage } = useChatThread({
+  const { thread, messages, sendMessage, isLoading } = useChatThread({
     threadId: threadId!,
     owner: owner!,
     repo: repo!,
@@ -99,6 +95,11 @@ export default function ChatScreen() {
           onSend={handleSend}
           onBranchChange={handleBranchChange}
         />
+        {isLoading && (
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.7)' }}>
+            <ActivityIndicator size="large" color="black" />
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

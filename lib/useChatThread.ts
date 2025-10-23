@@ -5,7 +5,7 @@ import { useFileRefs } from "@/store/fileRefs";
 import { useThreadActions } from "@/store/threads";
 import { useChat, type Message } from "@ai-sdk/react";
 import { fetch as expoFetch } from "expo/fetch";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { API_URL } from "./api";
 
 interface UseChatThreadParams {
@@ -16,20 +16,10 @@ interface UseChatThreadParams {
   onFinish?: () => void;
 }
 
-export type MessageToolFiles = Array<{
-  path: string;
-  newContent: string;
-  originalContent: string;
-}>;
+export type MessageToolFiles = Array<{ path: string; newContent: string; originalContent: string; }>;
 export type MessageToolResult = {
-  fileContents?: {
-    type: "GIT_DIFF";
-    files: MessageToolFiles;
-  };
-  response?: {
-    type: "TEXT_RESPONSE";
-    response: string;
-  };
+  fileContents?: { type: "GIT_DIFF"; files: MessageToolFiles; };
+  response?: { type: "TEXT_RESPONSE"; response: string; };
 };
 
 export function useChatThread({
@@ -46,6 +36,7 @@ export function useChatThread({
   const fileRefs = useFileRefs(threadId);
 
   const jwtToken = useRef(getItem(Storage.JWT_TOKEN)).current;
+  const [isLoading, setIsLoading] = useState(false);
 
   const { messages, append } = useChat({
     initialMessages: thread?.messages || [],
@@ -101,7 +92,11 @@ export function useChatThread({
       if (onFinishCallback) {
         onFinishCallback();
       }
+      setIsLoading(false);
     },
+    onLoading() {
+      setIsLoading(true);
+    }
   });
 
   const sendMessage = useCallback(
@@ -122,5 +117,6 @@ export function useChatThread({
     thread,
     messages,
     sendMessage,
+    isLoading
   };
 }

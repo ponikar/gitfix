@@ -1,0 +1,37 @@
+name: VibeRescue Scan
+
+on:
+  repository_dispatch:
+    types: [run_scan]
+  workflow_dispatch:
+
+jobs:
+  biome-scan:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Biome
+        run: npm install -g @biomejs/biome
+
+      - name: Run Biome check
+        run: |
+          biome check . \
+            --reporter=json \
+            > biome-report.json || true
+
+      - name: Upload Biome report
+        uses: actions/upload-artifact@v4
+        with:
+          name: biome-report
+          path: biome-report.json

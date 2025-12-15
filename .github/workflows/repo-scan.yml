@@ -24,14 +24,47 @@ jobs:
       - name: Install Biome
         run: npm install -g @biomejs/biome
 
-      - name: Run Biome check
+      - name: Run Biome (JSON output)
         run: |
-          biome check . \
-            --reporter=json \
-            > biome-report.json || true
+          biome check . --reporter=json > biome-raw.json || true
 
-      - name: Upload Biome report
+      - name: Summarize Biome report
+        run: |
+          jq '{
+            errorCount: (.diagnostics | map(select(.severity=="error")) | length),
+            warningCount: (.diagnostics | map(select(.severity=="warning")) | length),
+            errors: [.diagnostics[]
+              | select(.severity=="error")
+              | {
+                  file: .location.path,
+                  line: .location.span.start,
+                  rule: .rule,
+                  message: .message
+                }
+            ]
+          }' biome-raw.json > biome-summary.json
+
+      - name: Add scan metadata
+        run: |
+          cat <<EOF > scan-meta.json
+          {
+            "repo": "${{ github.repository }}",
+            "owner": "${{ github.repository_owner }}",
+            "commit": "${{ github.sha }}",
+            "run_id": "${{ github.run_id }}",
+            "tool": "biome"
+          }
+          EOF
+
+      - name: Compress artifacts
+        run: |
+          gzip -9 biome-summary.json
+          gzip -9 scan-meta.json
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: biome-report
-          path: biome-report.json
+          name: viberescue-scan
+          path: |
+            biome-summary.json.gz
+            scan-meta.json.gz

@@ -88,6 +88,9 @@ jobs:
               | .messages[]
               | {
                   file: $file,
+                  line: .line,
+                  column: .column,
+                  endLine: .endLine,
                   rule: .ruleId,
                   severity: .severity,
                   message: .message

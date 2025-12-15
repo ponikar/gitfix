@@ -36,9 +36,9 @@ jobs:
             errors: [.diagnostics[]
               | select(.severity=="error")
               | {
-                  file: .location.path,
-                  line: .location.span.start,
-                  rule: .rule,
+                  file: (.location.path // "unknown"),
+                  line: (.location.span.start.line // null),
+                  rule: (.rule // "unknown"),
                   message: .message
                 }
             ]

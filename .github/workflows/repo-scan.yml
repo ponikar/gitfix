@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  biome-scan:
+  eslint-scan:
     runs-on: ubuntu-latest
 
     permissions:
@@ -16,55 +16,87 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
+          bun-version: latest
 
-      - name: Install Biome
-        run: npm install -g @biomejs/biome
-
-      - name: Run Biome (JSON output)
+      - name: Install ESLint deps (bun)
         run: |
-          biome check . --reporter=json > biome-raw.json || true
+          bun i && bun add eslint \
+            @typescript-eslint/parser \
+            eslint-plugin-security \
+            eslint-plugin-react \
+            eslint-plugin-react-hooks \
+            eslint-plugin-import \
+            eslint-plugin-no-unsanitized
 
-      - name: Summarize Biome report
+      - name: Create ESLint flat config
+        run: |
+          cat <<EOF > eslint.config.js
+          import tsParser from "@typescript-eslint/parser";
+          import security from "eslint-plugin-security";
+          import react from "eslint-plugin-react";
+          import reactHooks from "eslint-plugin-react-hooks";
+          import importPlugin from "eslint-plugin-import";
+          import noUnsanitized from "eslint-plugin-no-unsanitized";
+
+          export default [
+            {
+              files: ["**/*.{js,jsx,ts,tsx}"],
+              languageOptions: {
+                parser: tsParser,
+                ecmaVersion: "latest",
+                sourceType: "module"
+              },
+              plugins: {
+                security,
+                react,
+                "react-hooks": reactHooks,
+                import: importPlugin,
+                "no-unsanitized": noUnsanitized
+              },
+              rules: {
+                "security/detect-eval-with-expression": "error",
+                "security/detect-object-injection": "warn",
+
+                "react/no-danger": "error",
+                "react-hooks/rules-of-hooks": "error",
+                "react-hooks/exhaustive-deps": "warn",
+
+                "no-unsanitized/method": "error",
+                "no-unsanitized/property": "error",
+
+                "import/no-dynamic-require": "warn"
+              }
+            }
+          ];
+          EOF
+
+      - name: Run ESLint
+        run: |
+          bunx eslint . \
+            --format json \
+            > eslint-raw.json || true
+
+      - name: Summarize ESLint results
         run: |
           jq '{
-            errorCount: (.diagnostics | map(select(.severity=="error")) | length),
-            warningCount: (.diagnostics | map(select(.severity=="warning")) | length),
-            errors: [.diagnostics[]
-              | select(.severity=="error")
+            issueCount: (map(.messages | length) | add),
+            issues: [
+              .[] | .filePath as $file
+              | .messages[]
               | {
-                  file: (.location.path // "unknown"),
-                  line: (.location.span.start.line // null),
-                  rule: (.rule // "unknown"),
+                  file: $file,
+                  rule: .ruleId,
+                  severity: .severity,
                   message: .message
                 }
             ]
-          }' biome-raw.json > biome-summary.json
+          }' eslint-raw.json > eslint-summary.json
 
-      - name: Add scan metadata
-        run: |
-          cat <<EOF > scan-meta.json
-          {
-            "repo": "${{ github.repository }}",
-            "owner": "${{ github.repository_owner }}",
-            "commit": "${{ github.sha }}",
-            "run_id": "${{ github.run_id }}",
-            "tool": "biome"
-          }
-          EOF
-
-      - name: Compress artifacts
-        run: |
-          gzip -9 biome-summary.json
-          gzip -9 scan-meta.json
-
-      - name: Upload artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: viberescue-scan
-          path: |
-            biome-summary.json.gz
-            scan-meta.json.gz
+          name: viberescue-eslint
+          path: eslint-summary.json

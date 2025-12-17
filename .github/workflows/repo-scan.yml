@@ -29,7 +29,8 @@ jobs:
             eslint-plugin-react \
             eslint-plugin-react-hooks \
             eslint-plugin-import \
-            eslint-plugin-no-unsanitized
+            eslint-plugin-no-unsanitized \
+            @next/eslint-plugin-next
 
       - name: Create ESLint flat config
         run: |
@@ -40,6 +41,7 @@ jobs:
           import reactHooks from "eslint-plugin-react-hooks";
           import importPlugin from "eslint-plugin-import";
           import noUnsanitized from "eslint-plugin-no-unsanitized";
+          import next from "@next/eslint-plugin-next";
 
           export default [
             {
@@ -54,20 +56,61 @@ jobs:
                 react,
                 "react-hooks": reactHooks,
                 import: importPlugin,
-                "no-unsanitized": noUnsanitized
+                "no-unsanitized": noUnsanitized,
+                "@next/next": next
               },
               rules: {
-                "security/detect-eval-with-expression": "error",
-                "security/detect-object-injection": "warn",
+                /* =========================
+                  Next.js defaults
+                ========================= */
+                "@next/next/no-html-link-for-pages": "warn",
+                "@next/next/no-img-element": "warn",
+                "@next/next/no-script-component-in-head": "warn",
+                "@next/next/no-head-element": "warn",
+                "@next/next/no-css-tags": "warn",
+                "@next/next/no-duplicate-head": "error",
+                "@next/next/no-sync-scripts": "error",
 
+                /* =========================
+                  React / Hooks
+                ========================= */
                 "react/no-danger": "error",
                 "react-hooks/rules-of-hooks": "error",
                 "react-hooks/exhaustive-deps": "warn",
 
+                /* =========================
+                  XSS / DOM injection
+                ========================= */
                 "no-unsanitized/method": "error",
                 "no-unsanitized/property": "error",
 
+                /* =========================
+                  JS / Injection patterns
+                ========================= */
+                "security/detect-eval-with-expression": "error",
+                "security/detect-object-injection": "warn",
+
+                "no-eval": "error",
+                "no-implied-eval": "error",
+
+                /* =========================
+                  Storage usage tracking
+                ========================= */
+                "no-restricted-globals": [
+                  "warn",
+                  "localStorage",
+                  "sessionStorage"
+                ],
+
+                /* =========================
+                  Dynamic imports / requires
+                ========================= */
                 "import/no-dynamic-require": "warn"
+              },
+              settings: {
+                react: {
+                  version: "detect"
+                }
               }
             }
           ];

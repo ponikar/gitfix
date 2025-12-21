@@ -13,24 +13,90 @@ jobs:
       contents: read
 
     steps:
+      # 1. Checkout
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2. Setup Bun (safe even if not used)
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
-      - name: Install ESLint deps (bun)
+      # 3. Detect package manager + core frameworks
+      - name: Detect package manager and core framework
         run: |
-          bun i && bun add eslint \
-            @typescript-eslint/parser \
-            eslint-plugin-security \
-            eslint-plugin-react \
-            eslint-plugin-react-hooks \
-            eslint-plugin-import \
-            eslint-plugin-no-unsanitized
+          PM="npm"
+          if [ -f bun.lockb ] || [ -f bun.lock ]; then PM="bun"; fi
+          if [ -f pnpm-lock.yaml ]; then PM="pnpm"; fi
+          if [ -f yarn.lock ]; then PM="yarn"; fi
 
+          FRAMEWORKS=$(node -e "
+            const pkg = require('./package.json');
+            const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+            const out = [];
+            if (deps.react) out.push('react');
+            if (deps.next) out.push('nextjs');
+            if (deps['react-native']) out.push('react-native');
+            console.log(out.join(',') || 'unknown');
+          ")
+
+          echo "PACKAGE_MANAGER=$PM" >> $GITHUB_ENV
+          echo "FRAMEWORKS=$FRAMEWORKS" >> $GITHUB_ENV
+
+          cat <<EOF > viberescue-env.json
+          {
+            "packageManager": "$PM",
+            "frameworks": "$FRAMEWORKS"
+          }
+          EOF
+
+      # 4. Install dependencies based on detected package manager
+      - name: Install ESLint deps (auto)
+        run: |
+          if [ "$PACKAGE_MANAGER" = "bun" ]; then
+            bun i
+            bun add eslint \
+              @typescript-eslint/parser \
+              eslint-plugin-security \
+              eslint-plugin-react \
+              eslint-plugin-react-hooks \
+              eslint-plugin-import \
+              eslint-plugin-no-unsanitized \
+              @next/eslint-plugin-next
+          elif [ "$PACKAGE_MANAGER" = "pnpm" ]; then
+            pnpm install
+            pnpm add -D eslint \
+              @typescript-eslint/parser \
+              eslint-plugin-security \
+              eslint-plugin-react \
+              eslint-plugin-react-hooks \
+              eslint-plugin-import \
+              eslint-plugin-no-unsanitized \
+              @next/eslint-plugin-next
+          elif [ "$PACKAGE_MANAGER" = "yarn" ]; then
+            yarn install --frozen-lockfile
+            yarn add -D eslint \
+              @typescript-eslint/parser \
+              eslint-plugin-security \
+              eslint-plugin-react \
+              eslint-plugin-react-hooks \
+              eslint-plugin-import \
+              eslint-plugin-no-unsanitized \
+              @next/eslint-plugin-next
+          else
+            npm install
+            npm install --save-dev eslint \
+              @typescript-eslint/parser \
+              eslint-plugin-security \
+              eslint-plugin-react \
+              eslint-plugin-react-hooks \
+              eslint-plugin-import \
+              eslint-plugin-no-unsanitized \
+              @next/eslint-plugin-next
+          fi
+
+      # 5. Create ESLint flat config
       - name: Create ESLint flat config
         run: |
           cat <<EOF > eslint.config.js
@@ -40,6 +106,7 @@ jobs:
           import reactHooks from "eslint-plugin-react-hooks";
           import importPlugin from "eslint-plugin-import";
           import noUnsanitized from "eslint-plugin-no-unsanitized";
+          import next from "@next/eslint-plugin-next";
 
           export default [
             {
@@ -54,34 +121,65 @@ jobs:
                 react,
                 "react-hooks": reactHooks,
                 import: importPlugin,
-                "no-unsanitized": noUnsanitized
+                "no-unsanitized": noUnsanitized,
+                "@next/next": next
               },
               rules: {
-                "security/detect-eval-with-expression": "error",
-                "security/detect-object-injection": "warn",
+                /* Next.js */
+                "@next/next/no-html-link-for-pages": "warn",
+                "@next/next/no-img-element": "warn",
+                "@next/next/no-script-component-in-head": "warn",
+                "@next/next/no-head-element": "warn",
+                "@next/next/no-css-tags": "warn",
+                "@next/next/no-duplicate-head": "error",
+                "@next/next/no-sync-scripts": "error",
 
+                /* React / Hooks */
                 "react/no-danger": "error",
                 "react-hooks/rules-of-hooks": "error",
                 "react-hooks/exhaustive-deps": "warn",
 
+                /* XSS */
                 "no-unsanitized/method": "error",
                 "no-unsanitized/property": "error",
 
+                /* Injection */
+                "security/detect-eval-with-expression": "error",
+                "security/detect-object-injection": "warn",
+                "no-eval": "error",
+                "no-implied-eval": "error",
+
+                /* Storage */
+                "no-restricted-globals": [
+                  "warn",
+                  "localStorage",
+                  "sessionStorage"
+                ],
+
+                /* Imports */
                 "import/no-dynamic-require": "warn"
+              },
+              settings: {
+                react: {
+                  version: "detect"
+                }
               }
             }
           ];
           EOF
 
+      # 6. Run ESLint
       - name: Run ESLint
         run: |
           bunx eslint . \
             --format json \
             > eslint-raw.json || true
 
+      # 7. Merge ESLint output with env + framework metadata
       - name: Summarize ESLint results
         run: |
-          jq '{
+          jq --slurpfile env viberescue-env.json '{
+            meta: $env[0],
             issueCount: (map(.messages | length) | add),
             issues: [
               .[] | .filePath as $file
@@ -98,6 +196,7 @@ jobs:
             ]
           }' eslint-raw.json > eslint-summary.json
 
+      # 8. Upload final artifact
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
